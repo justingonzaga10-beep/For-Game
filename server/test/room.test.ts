@@ -375,5 +375,12 @@ describe("disconnects and moderation", () => {
     room.removePlayer("p1");
     const back = room.addPlayer({ id: "p1b", clientId: "c1", ip: "", name: "Player1", avatar: { head: 0, color: 0, eyes: 0, mouth: 0, top: 0 } });
     expect(back.score).toBe(score);
+    // Same turn: still counts as guessed, so guessing again scores nothing.
+    expect(back.guessed).toBe(true);
+    room.handleChat("p1b", "giraffe");
+    expect(back.score).toBe(score);
+    // Drawer still gets credit for that guess.
+    room.handleChat("p2", "giraffe");
+    expect(room.reveal!.gains.p0).toBe(250);
   });
 });

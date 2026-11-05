@@ -1,7 +1,8 @@
-// Stage 3 check: landing -> private room -> invite link -> settings -> join -> kick -> start; plus quick play.
+// Lobby flow: landing -> private room -> invite link -> settings -> join -> kick -> start; plus quick play.
 const { chromium } = require("playwright");
 const BASE = process.env.BASE || "http://localhost:5173";
-const SHOTS = process.env.SHOTS || "/tmp";
+const SHOTS = process.env.SHOTS || "e2e/screens";
+require("fs").mkdirSync(SHOTS, { recursive: true });
 const ok = (cond, msg) => { console.log(cond ? "PASS" : "FAIL", msg); if (!cond) process.exitCode = 1; };
 (async () => {
   const b = await chromium.launch();

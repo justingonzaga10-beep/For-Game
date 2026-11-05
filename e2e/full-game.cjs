@@ -92,8 +92,10 @@ const ok = (cond, msg) => { console.log(cond ? "  ✓" : "  ✗", msg); if (!con
       const closeBefore = [await g1.locator(".msg.close").count(), await g2.locator(".msg.close").count()];
       await g1.fill("#chat-input", close);
       await g1.press("#chat-input", "Enter");
-      await g1.waitForTimeout(250);
-      ok((await g1.locator(".msg.close").count()) > closeBefore[0], `${g1.name} gets a private "so close"`);
+      const gotClose = await g1
+        .waitForFunction((n) => document.querySelectorAll(".msg.close").length > n, closeBefore[0], { timeout: 3000 })
+        .then(() => true, () => false);
+      ok(gotClose, `${g1.name} gets a private "so close" for "${close}"`);
       ok((await g2.locator(".msg.close").count()) === closeBefore[1], `${g2.name} does not see it`);
     }
     await g1.fill("#chat-input", word.toUpperCase() + " ");

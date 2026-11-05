@@ -100,7 +100,9 @@ export class Room {
   private bannedIps = new Set<string>();
   private kickVotes = new Map<string, Set<string>>();
   /** Scores of players who dropped mid-game, restored if they come back quickly. */
-  private ghosts = new Map<string, { score: number; until: number }>();
+  private ghosts = new Map<string, { score: number; until: number; guessedTurn: number | null; oldId: string }>();
+  /** Increments every turn, so a returning player's "already guessed" only applies to the same turn. */
+  private turnId = 0;
   private msgId = 0;
   private disposed = false;
 
@@ -134,14 +136,21 @@ export class Room {
   addPlayer(np: NewPlayer): Player {
     const ghost = this.ghosts.get(np.clientId);
     this.ghosts.delete(np.clientId);
+    const restore = ghost && ghost.until > Date.now() && this.phase !== "lobby" ? ghost : undefined;
     const p: Player = {
       ...np,
-      score: ghost && ghost.until > Date.now() && this.phase !== "lobby" ? ghost.score : 0,
-      guessed: false,
+      score: restore?.score ?? 0,
+      // Coming back in the same turn you already guessed in: no second guess.
+      guessed: !!restore && restore.guessedTurn === this.turnId && this.phase === "drawing",
       chatLimit: new TokenBucket(6, 1.5),
       drawLimit: new TokenBucket(80, 45),
     };
     this.players.set(p.id, p);
+    if (p.guessed && restore) {
+      this.guessOrder = this.guessOrder.map((id) => (id === restore.oldId ? p.id : id));
+      const gained = this.gains.get(restore.oldId);
+      if (gained !== undefined) this.gains.set(p.id, gained);
+    }
     if (!this.isPublic && !this.hostId) this.hostId = p.id;
     if (this.inGame && !this.order.includes(p.id)) this.order.push(p.id);
 
@@ -164,7 +173,9 @@ export class Room {
     this.players.delete(id);
     this.kickVotes.delete(id);
     for (const voters of this.kickVotes.values()) voters.delete(id);
-    if (this.inGame && reason === "left" && p.score > 0) this.ghosts.set(p.clientId, { score: p.score, until: Date.now() + GHOST_MS });
+    if (this.inGame && reason === "left" && (p.score > 0 || p.guessed)) {
+      this.ghosts.set(p.clientId, { score: p.score, until: Date.now() + GHOST_MS, guessedTurn: p.guessed ? this.turnId : null, oldId: p.id });
+    }
 
     if (reason !== "left") this.io.removed(id, reason);
     const verb = reason === "left" ? "left the room" : reason === "votekicked" ? "was vote-kicked" : `was ${reason} by the host`;
@@ -251,6 +262,7 @@ export class Room {
 
   private nextTurn(): void {
     this.clearTimers();
+    this.turnId++;
     this.reveal = null;
     this.word = null;
     this.choices = [];

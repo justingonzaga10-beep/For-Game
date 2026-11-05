@@ -1,0 +1,10 @@
+# Render Blueprint: New > Blueprint, point it at this repo.
+services:
+  - type: web
+    name: inkwave
+    runtime: docker
+    plan: starter
+    healthCheckPath: /healthz
+    autoDeploy: true
+    # Rooms live in memory: keep exactly one instance.
+    numInstances: 1

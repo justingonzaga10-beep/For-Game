@@ -440,6 +440,8 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 @media (max-width: 900px) {
   .game.narrow { display: flex; flex-direction: column; gap: 10px; height: auto; }
   .game.narrow .canvas-frame { width: 100%; }
+  /* Word and timer stay in view while the page scrolls on phones. */
+  .game.narrow .wordbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 102; background: var(--panel-solid); }
   .lobby { grid-template-columns: minmax(0, 1fr); }
   .settings-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .profile-row { grid-template-columns: minmax(0, 1fr); }
