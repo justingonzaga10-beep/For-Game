@@ -5,11 +5,32 @@ import { Toolbar } from "../canvas/Toolbar";
 import type { DrawingEngine } from "../canvas/engine";
 import { useGame } from "../lib/game";
 import { load, save } from "../lib/storage";
+import { Chat } from "./Chat";
+import { Overlays } from "./Overlays";
+import { Scoreboard } from "./Scoreboard";
+import { WordBar } from "./WordBar";
+
+function useIsNarrow(px = 900) {
+  const q = `(max-width: ${px}px)`;
+  const [narrow, setNarrow] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const on = () => setNarrow(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, [q]);
+  return narrow;
+}
 
 export function GameScreen() {
-  const { view } = useGame();
+  const g = useGame();
+  const view = g.view!;
   const engineRef = useRef<DrawingEngine | null>(null);
   const emitRef = useRef<((ops: DrawOp[]) => void) | null>(null);
+  const narrow = useIsNarrow();
+  const [tab, setTab] = useState<"chat" | "players">("chat");
+  const [unread, setUnread] = useState(0);
+  const lastSeen = useRef(g.chat.length);
   const [tools, setToolsState] = useState<ToolState>(() =>
     load("tools", { tool: "brush", size: BRUSH_SIZES[1], primary: "#000000", secondary: "#ffffff", pressure: true } as ToolState),
   );
@@ -18,9 +39,21 @@ export function GameScreen() {
     save("tools", t);
   };
 
-  const isDrawer = !!view && view.phase === "drawing" && view.drawerId === view.you;
-  const undo = () => isDrawer && engineRef.current && engineRef.current.actionCount > 0 && emitRef.current?.([{ k: "undo" }]);
-  const clear = () => isDrawer && emitRef.current?.([{ k: "clear" }]);
+  const isDrawer = view.phase === "drawing" && view.drawerId === view.you;
+  const undo = () => {
+    if (isDrawer && engineRef.current && engineRef.current.actionCount > 0) emitRef.current?.([{ k: "undo" }]);
+  };
+  const clear = () => {
+    if (isDrawer) emitRef.current?.([{ k: "clear" }]);
+  };
+
+  // Unread badge for the chat tab on phones.
+  useEffect(() => {
+    if (!narrow || tab === "chat") {
+      lastSeen.current = g.chat.length;
+      setUnread(0);
+    } else setUnread(Math.max(0, g.chat.length - lastSeen.current));
+  }, [g.chat.length, narrow, tab]);
 
   // Keyboard shortcuts for the drawer: B brush, E eraser, F fill, 1-5 sizes, Ctrl+Z undo.
   const toolsRef = useRef(tools);
@@ -47,10 +80,47 @@ export function GameScreen() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  return (
-    <div className="board">
-      <DrawCanvas canDraw={isDrawer} tools={tools} engineRef={engineRef} emitRef={emitRef} />
+  const board = (
+    <section className="board" aria-label="Drawing board">
+      <WordBar />
+      <div className="canvas-frame">
+        <DrawCanvas canDraw={isDrawer} tools={tools} engineRef={engineRef} emitRef={emitRef} />
+        <Overlays />
+      </div>
       {isDrawer && <Toolbar tools={tools} setTools={setTools} onUndo={undo} onClear={clear} />}
+    </section>
+  );
+
+  if (narrow) {
+    return (
+      <div className="game narrow">
+        {board}
+        <div className="tabs" role="tablist">
+          <button role="tab" type="button" aria-selected={tab === "chat"} className={tab === "chat" ? "on" : ""} onClick={() => setTab("chat")}>
+            Chat {unread > 0 && <span className="badge">{unread > 99 ? "99+" : unread}</span>}
+          </button>
+          <button role="tab" type="button" aria-selected={tab === "players"} className={tab === "players" ? "on" : ""} onClick={() => setTab("players")}>
+            Players <span className="muted">{view.players.length}</span>
+          </button>
+        </div>
+        <div className="panel cabinet tab-panel" role="tabpanel">
+          {tab === "chat" ? <Chat /> : <Scoreboard />}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="game">
+      <aside className="panel cabinet side-scores" aria-label="Players">
+        <h2 className="side-h">Players</h2>
+        <Scoreboard />
+      </aside>
+      {board}
+      <aside className="panel cabinet side-chat" aria-label="Chat">
+        <h2 className="side-h">Chat</h2>
+        <Chat autoFocus />
+      </aside>
     </div>
   );
 }

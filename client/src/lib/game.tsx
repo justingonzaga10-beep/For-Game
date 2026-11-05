@@ -214,5 +214,6 @@ export function useCountdown(): number | null {
     return () => clearInterval(t);
   }, [view?.phaseEndsAt]);
   if (!view?.phaseEndsAt) return null;
-  return Math.max(0, Math.ceil((view.phaseEndsAt - serverNow()) / 1000));
+  // A small grace keeps a fresh 30 s turn from flashing 31 when clocks differ by a few ms.
+  return Math.max(0, Math.ceil((view.phaseEndsAt - serverNow() - 150) / 1000));
 }
