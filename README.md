@@ -152,7 +152,7 @@ The image runs the unit tests during the build, ships only the server's producti
 ### Render
 
 1. Push this repo to GitHub.
-2. In Render, choose **New → Blueprint** and select the repo. `render.yaml` sets up a Docker web service with the `/healthz` health check.
+2. In Render, choose **New → Blueprint** and select the repo. `render.yaml` sets up a Docker web service on the free plan with the `/healthz` health check. The free plan sleeps after about 15 minutes without visitors; change `plan` to `starter` for an always-on server.
 3. Deploy. Render supports WebSockets out of the box. Keep the instance count at 1.
 
 Or create a **Web Service** by hand: runtime Docker, or Node with build command `npm ci && npm run build` and start command `npm start`.

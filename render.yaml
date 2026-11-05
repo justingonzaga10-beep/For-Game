@@ -3,7 +3,8 @@ services:
   - type: web
     name: inkwave
     runtime: docker
-    plan: starter
+    # Free is fine for testing (it sleeps when idle). Use "starter" for an always-on game.
+    plan: free
     healthCheckPath: /healthz
     autoDeploy: true
     # Rooms live in memory: keep exactly one instance.
