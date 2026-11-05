@@ -226,7 +226,10 @@ export function Lobby() {
         </div>
       </section>
 
-      <section className="panel cabinet lobby-chat" aria-label="Chat">
+      <section className="panel cabinet lobby-chat" aria-labelledby="chat-h">
+        <h2 id="chat-h" className="side-h">
+          Chat
+        </h2>
         <Chat />
       </section>
     </div>

@@ -3,8 +3,19 @@ import { normalizeRoomCode } from "@inkwave/shared";
 import { GameScreen } from "./components/GameScreen";
 import { Landing } from "./components/Landing";
 import { Lobby } from "./components/Lobby";
-import { TopBar } from "./components/TopBar";
+import { ArcadeControls, TopBar } from "./components/TopBar";
 import { useGame } from "./lib/game";
+import { useGameSounds } from "./lib/useGameSounds";
+
+/** Synthwave backdrop: horizon sun and a scrolling perspective grid. */
+function Backdrop() {
+  return (
+    <div className="synth-bg" aria-hidden="true">
+      <div className="sun" />
+      <div className="grid" />
+    </div>
+  );
+}
 
 function usePath(): [string, (p: string, replace?: boolean) => void] {
   const [path, setPath] = useState(location.pathname);
@@ -27,6 +38,7 @@ export function App() {
   const [path, navigate] = usePath();
   const linkCode = normalizeRoomCode(path.match(/^\/room\/([^/]+)/)?.[1] ?? "");
   const view = g.view;
+  useGameSounds();
 
   // Keep the address bar on the room you're in, so it can be shared or reloaded.
   useEffect(() => {
@@ -48,6 +60,15 @@ export function App() {
   if (!view) {
     return (
       <div className="app">
+        <Backdrop />
+        {g.notice && (
+          <div className="toast" role="status">
+            {g.notice}
+          </div>
+        )}
+        <div className="landing-controls">
+          <ArcadeControls />
+        </div>
         <Landing joinCode={linkCode || undefined} onEntered={(code) => navigate(`/room/${code}`)} />
       </div>
     );
@@ -55,6 +76,12 @@ export function App() {
 
   return (
     <div className="app in-room">
+      <Backdrop />
+      {g.notice && (
+        <div className="toast" role="status">
+          {g.notice}
+        </div>
+      )}
       <TopBar
         onLeave={() => {
           g.leave();

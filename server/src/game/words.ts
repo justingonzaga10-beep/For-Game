@@ -28,9 +28,11 @@ export function parseCustomWords(raw: string): string[] {
 
 type Rand = () => number;
 
-function pickFrom(pool: string[], exclude: Set<string>, rand: Rand): string | null {
-  const fresh = pool.filter((w) => !exclude.has(w));
-  const src = fresh.length > 0 ? fresh : pool;
+/** Random word from `pool`, never one in `never`, and avoiding `avoid` while fresh words remain. */
+function pickFrom(pool: string[], avoid: Set<string>, rand: Rand, never: Set<string> = new Set()): string | null {
+  const allowed = pool.filter((w) => !never.has(w));
+  const fresh = allowed.filter((w) => !avoid.has(w));
+  const src = fresh.length > 0 ? fresh : allowed;
   if (src.length === 0) return null;
   return src[Math.floor(rand() * src.length)];
 }
@@ -39,44 +41,44 @@ function pickFrom(pool: string[], exclude: Set<string>, rand: Rand): string | nu
  * Picks `count` distinct word options. Built-in words rotate through easy,
  * medium and hard so the drawer gets a spread of difficulty. Custom words
  * join the pool, or replace it with "custom words only". Combination mode
- * joins two words with a space. Words in `used` are avoided while fresh
- * ones remain.
+ * joins two different words with a space. Words in `used` are avoided while
+ * fresh ones remain.
  */
 export function pickWordChoices(settings: RoomSettings, count: number, used: Set<string>, rand: Rand = Math.random): string[] {
   const list = WORD_LISTS[settings.language] ?? WORD_LISTS.en;
   const custom = parseCustomWords(settings.customWords);
   const customOnly = settings.customOnly && custom.length > 0;
   const tiers = customOnly ? [custom] : [list.easy, list.medium, list.hard];
-
-  const choices: string[] = [];
   const taken = new Set(used);
-  const single = (slot: number): string | null => {
+
+  const single = (slot: number, never?: Set<string>): string | null => {
     // Custom words get roughly a one-in-three share when mixed with built-ins.
     if (!customOnly && custom.length > 0 && rand() < 1 / 3) {
-      const c = pickFrom(custom, taken, rand);
+      const c = pickFrom(custom, taken, rand, never);
       if (c) return c;
     }
-    return pickFrom(tiers[slot % tiers.length], taken, rand);
+    return pickFrom(tiers[slot % tiers.length], taken, rand, never);
   };
 
+  const choices: string[] = [];
   for (let slot = 0; slot < count; slot++) {
     let word: string | null = null;
-    for (let attempt = 0; attempt < 8 && (!word || choices.includes(word)); attempt++) {
+    for (let attempt = 0; attempt < 10 && (!word || choices.includes(word)); attempt++) {
       if (settings.wordMode === "combination") {
         const a = single(slot);
-        if (a) taken.add(a);
-        const b = single(slot + 1);
-        if (a) taken.delete(a);
-        word = a && b && a !== b ? `${a} ${b}` : a;
+        const b = a ? single(slot + 1, new Set([a])) : null;
+        word = a && b ? `${a} ${b}` : null;
       } else {
         word = single(slot);
       }
     }
     if (word && !choices.includes(word)) {
       choices.push(word);
-      for (const part of word.split(" ")) taken.add(part);
       taken.add(word);
+      for (const part of word.split(" ")) taken.add(part);
     }
   }
-  return choices.length > 0 ? choices : ["star"];
+  if (choices.length > 0) return choices;
+  // Only reachable with a one-word custom list in combination mode.
+  return [custom[0] ?? list.easy[0]];
 }

@@ -180,10 +180,13 @@ describe("word lists", () => {
     for (let i = 0; i < 20; i++) for (const w of pickWordChoices(s, 3, new Set())) expect(["alpha", "beta", "gamma"]).toContain(w);
   });
 
-  it("joins two words in combination mode", () => {
+  it("joins two different words in combination mode, even when fresh words run out", () => {
     const s = { ...DEFAULT_SETTINGS, wordMode: "combination" as const, customWords: "red, blue, green, gold", customOnly: true };
-    const c = pickWordChoices(s, 3, new Set());
-    for (const w of c) {
+    const all = Array.from({ length: 200 }, () => pickWordChoices(s, 3, new Set())).flat();
+    for (const w of [...all, ...pickWordChoices({ ...s, customWords: "" , customOnly: false }, 5, new Set())]) {
+      expect(w.split(" ").length).toBeGreaterThanOrEqual(2);
+    }
+    for (const w of all) {
       const [a, b] = w.split(" ");
       expect(a).not.toBe(b);
       expect(["red", "blue", "green", "gold"]).toContain(a);

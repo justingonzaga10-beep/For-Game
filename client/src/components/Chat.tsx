@@ -36,7 +36,7 @@ export function Chat({ autoFocus = false }: { autoFocus?: boolean }) {
   const visible = g.chat.filter((m) => !m.playerId || !muted.has(m.playerId) || m.kind === "correct");
 
   return (
-    <div className="chat">
+    <div className="chat-box">
       <ol
         className="chat-log"
         ref={listRef}

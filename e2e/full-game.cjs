@@ -102,7 +102,10 @@ const ok = (cond, msg) => { console.log(cond ? "  ✓" : "  ✗", msg); if (!con
     ok(true, `${g1.name} guessed "${word}"`);
     const g2log = (await g2.locator(".chat-log").textContent()).toLowerCase();
     ok(g2log.includes(`${g1.name.toLowerCase()} guessed the word`), `${g2.name} sees the announcement`);
-    ok(!g2log.includes(word.toLowerCase()), `${g2.name}'s chat never shows the word`);
+    // Only this turn's player messages matter; earlier turns' reveals legitimately show old words.
+    const playerMsgs = (await g2.locator(".msg:not(.system)").allTextContents()).slice(-6).join(" ").toLowerCase();
+    const wordRe = new RegExp(`\\b${word.toLowerCase().replace(/[^a-z ]/g, "")}\\b`);
+    ok(!wordRe.test(playerMsgs), `${g2.name}'s chat never shows the word`);
 
     // Guessed players chat privately with the drawer.
     const secret = `secret clue ${turn}`;
