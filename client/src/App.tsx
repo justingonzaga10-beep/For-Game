@@ -1,43 +1,67 @@
-import { useEffect, useRef, useState } from "react";
-import { randomAvatar } from "@inkwave/shared";
+import { useEffect, useState } from "react";
+import { normalizeRoomCode } from "@inkwave/shared";
 import { GameScreen } from "./components/GameScreen";
+import { Landing } from "./components/Landing";
+import { Lobby } from "./components/Lobby";
+import { TopBar } from "./components/TopBar";
 import { useGame } from "./lib/game";
 
-/** Stage 2 harness: join a room straight from /room/CODE and draw. Replaced by the real landing and lobby next. */
+function usePath(): [string, (p: string, replace?: boolean) => void] {
+  const [path, setPath] = useState(location.pathname);
+  useEffect(() => {
+    const onPop = () => setPath(location.pathname);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const navigate = (p: string, replace = false) => {
+    if (p === location.pathname) return;
+    if (replace) history.replaceState(null, "", p);
+    else history.pushState(null, "", p);
+    setPath(p);
+  };
+  return [path, navigate];
+}
+
 export function App() {
   const g = useGame();
-  const [error, setError] = useState("");
-  const code = location.pathname.match(/^\/room\/([A-Za-z0-9]+)/)?.[1];
+  const [path, navigate] = usePath();
+  const linkCode = normalizeRoomCode(path.match(/^\/room\/([^/]+)/)?.[1] ?? "");
+  const view = g.view;
 
-  const once = useRef(false);
+  // Keep the address bar on the room you're in, so it can be shared or reloaded.
   useEffect(() => {
-    if (once.current) return;
-    once.current = true;
-    const profile = { name: `Tester${Math.floor(Math.random() * 99)}`, avatar: randomAvatar(), language: "en" as const };
-    const p = code ? g.join(code, profile) : g.create(profile);
-    p.then((r) => {
-      if (!r.ok) setError(r.error);
-      else if (!code) history.replaceState(null, "", `/room/${r.code}`);
-    });
+    if (view && linkCode !== view.code) navigate(`/room/${view.code}`, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [view?.code]);
 
-  const v = g.view;
+  // Leaving with the browser's back button leaves the room.
+  useEffect(() => {
+    if (view && linkCode && linkCode !== view.code) g.leave();
+    if (view && !linkCode) g.leave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
+
+  useEffect(() => {
+    document.title = view ? `Inkwave · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Inkwave";
+  }, [view?.code, view?.isPublic]);
+
+  if (!view) {
+    return (
+      <div className="app">
+        <Landing joinCode={linkCode || undefined} onEntered={(code) => navigate(`/room/${code}`)} />
+      </div>
+    );
+  }
+
   return (
-    <main style={{ padding: 16 }}>
-      {error && <p>{error}</p>}
-      {v && (
-        <p>
-          Room {v.code} · {v.phase} · players {v.players.length} · word {v.word ?? v.pattern}
-          {v.phase === "lobby" && v.hostId === v.you && <button onClick={g.start}>Start</button>}
-          {v.choices?.map((c, i) => (
-            <button key={c} onClick={() => g.choose(i)}>
-              {c}
-            </button>
-          ))}
-        </p>
-      )}
-      <GameScreen />
-    </main>
+    <div className="app in-room">
+      <TopBar
+        onLeave={() => {
+          g.leave();
+          navigate("/");
+        }}
+      />
+      {view.phase === "lobby" ? <Lobby /> : <GameScreen />}
+    </div>
   );
 }

@@ -63,6 +63,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const canvasLog = useMemo(() => new CanvasLog(), []);
   const fx = useRef(new Set<FxListener>());
   const roomCode = useRef<string | null>(null);
+  /** Where to rejoin after a dropped connection (wifi blip, server restart). */
+  const lastRoom = useRef<{ code: string; profile: Profile } | null>(null);
 
   useEffect(() => {
     const onState = (v: RoomView) => {
@@ -78,6 +80,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const onFx = (f: { playerId: string; points: number }) => fx.current.forEach((l) => l(f));
     const onRemoved = ({ reason }: { reason: Removal }) => {
       roomCode.current = null;
+      lastRoom.current = null;
       setView(null);
       setRemoved(reason);
     };
@@ -87,7 +90,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
       clearTimeout(noticeTimer);
       noticeTimer = setTimeout(() => setNotice(null), 4000);
     };
-    const onConnect = () => setConnected(true);
+    const onConnect = () => {
+      setConnected(true);
+      const last = lastRoom.current;
+      if (!last) return;
+      socket.emit("room:join", last.code, last.profile, (r) => {
+        if (!r.ok) {
+          lastRoom.current = null;
+          roomCode.current = null;
+          setView(null);
+          onNotice(`You were disconnected and couldn't rejoin: ${r.error}`);
+        }
+      });
+    };
     const onDisconnect = () => setConnected(false);
 
     socket.on("room:state", onState);
@@ -114,10 +129,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [canvasLog]);
 
   const enter = useCallback(
-    (p: Promise<JoinResult>) =>
+    (p: Promise<JoinResult>, profile: Profile) =>
       p.then((r) => {
         if (r.ok) {
-          setChat([]);
+          lastRoom.current = { code: r.code, profile };
           setRemoved(null);
         }
         return r;
@@ -142,11 +157,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
     notice,
     canvasLog,
     serverNow: () => Date.now() + offset.current,
-    quickplay: (p) => enter(ack<JoinResult>((cb) => socket.emit("room:quickplay", p, cb))),
-    create: (p) => enter(ack<JoinResult>((cb) => socket.emit("room:create", p, cb))),
-    join: (code, p) => enter(ack<JoinResult>((cb) => socket.emit("room:join", code, p, cb))),
+    quickplay: (p) => {
+      setChat([]);
+      return enter(ack<JoinResult>((cb) => socket.emit("room:quickplay", p, cb)), p);
+    },
+    create: (p) => {
+      setChat([]);
+      return enter(ack<JoinResult>((cb) => socket.emit("room:create", p, cb)), p);
+    },
+    join: (code, p) => {
+      setChat([]);
+      return enter(ack<JoinResult>((cb) => socket.emit("room:join", code, p, cb)), p);
+    },
     leave: () => {
       socket.emit("room:leave");
+      lastRoom.current = null;
       roomCode.current = null;
       setView(null);
       setChat([]);

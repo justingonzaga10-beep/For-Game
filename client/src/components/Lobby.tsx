@@ -1,0 +1,243 @@
+import { useEffect, useState } from "react";
+import { LANGUAGES, SETTING_BOUNDS, type RoomSettings, type WordMode } from "@inkwave/shared";
+import { useCountdown, useGame } from "../lib/game";
+import { useMuted } from "../lib/muted";
+import { Avatar } from "./Avatar";
+import { Chat } from "./Chat";
+import { PlayerActions } from "./PlayerActions";
+
+const DRAW_TIMES = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 180, 210, 240];
+const range = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+const MODES: { id: WordMode; label: string; hint: string }[] = [
+  { id: "normal", label: "Normal", hint: "Blanks show the letter count" },
+  { id: "hidden", label: "Hidden", hint: "No blanks, no hints" },
+  { id: "combination", label: "Combo", hint: "Two words joined together" },
+];
+
+export function Lobby() {
+  const g = useGame();
+  const view = g.view!;
+  const muted = useMuted();
+  const isHost = view.hostId === view.you && !view.isPublic;
+  const s = view.settings;
+  const set = (patch: Partial<RoomSettings>) => g.updateSettings(patch);
+  const countdown = useCountdown();
+
+  // Custom words are typed freely and sent after a short pause.
+  const [words, setWords] = useState(s.customWords);
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) setWords(s.customWords);
+  }, [s.customWords, editing]);
+  useEffect(() => {
+    if (!editing || words === s.customWords) return;
+    const t = setTimeout(() => set({ customWords: words }), 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [words, editing]);
+
+  const link = `${location.origin}/room/${view.code}`;
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      const el = document.getElementById("invite-link") as HTMLInputElement | null;
+      el?.select();
+    }
+  };
+
+  const enough = view.players.length >= 2;
+  const customCount = s.customWords.split(",").filter((w) => w.trim()).length;
+
+  return (
+    <div className="lobby">
+      <section className="panel cabinet lobby-players" aria-labelledby="players-h">
+        <div className="panel-head">
+          <h2 id="players-h">Players</h2>
+          <span className="count">
+            {view.players.length}/{s.maxPlayers}
+          </span>
+        </div>
+
+        {!view.isPublic && (
+          <div className="invite">
+            <label htmlFor="invite-link">Invite link</label>
+            <div className="invite-row">
+              <input id="invite-link" readOnly value={link} onFocus={(e) => e.target.select()} />
+              <button type="button" className="btn small secondary" onClick={copy}>
+                {copied ? "Copied!" : "Copy"}
+              </button>
+            </div>
+            <p className="muted">
+              Room code <b className="code">{view.code}</b>
+            </p>
+          </div>
+        )}
+
+        <ul className="lobby-list">
+          {view.players.map((p) => (
+            <li key={p.id} className={p.id === view.you ? "me" : ""}>
+              <Avatar avatar={p.avatar} size={40} />
+              <span className="pname">
+                {p.name}
+                {p.id === view.you && <em> (you)</em>}
+                {muted.has(p.id) && <em className="muted-tag"> muted</em>}
+              </span>
+              {p.isHost && (
+                <span className="crown" title="Host">
+                  ♛
+                </span>
+              )}
+              {p.kickVotes > 0 && <span className="votes">kick {p.kickVotes}</span>}
+              <PlayerActions player={p} view={view} />
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="panel cabinet lobby-settings" aria-labelledby="settings-h">
+        <div className="panel-head">
+          <h2 id="settings-h">{view.isPublic ? "Public room" : "Room settings"}</h2>
+          {!isHost && !view.isPublic && <span className="muted">Only the host can change these</span>}
+        </div>
+
+        <fieldset className="settings-grid" disabled={!isHost}>
+          <Field label="Language">
+            <select id="set-language" value={s.language} onChange={(e) => set({ language: e.target.value as RoomSettings["language"] })}>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Players">
+            <select id="set-max" value={s.maxPlayers} onChange={(e) => set({ maxPlayers: +e.target.value })}>
+              {range(...SETTING_BOUNDS.maxPlayers).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Rounds">
+            <select id="set-rounds" value={s.rounds} onChange={(e) => set({ rounds: +e.target.value })}>
+              {range(...SETTING_BOUNDS.rounds).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Draw time">
+            <select id="set-time" value={s.drawTime} onChange={(e) => set({ drawTime: +e.target.value })}>
+              {(DRAW_TIMES.includes(s.drawTime) ? DRAW_TIMES : [...DRAW_TIMES, s.drawTime].sort((a, b) => a - b)).map((n) => (
+                <option key={n} value={n}>
+                  {n} s
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Word choices">
+            <select id="set-choices" value={s.wordChoices} onChange={(e) => set({ wordChoices: +e.target.value })}>
+              {range(...SETTING_BOUNDS.wordChoices).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Hints">
+            <select id="set-hints" value={s.hints} onChange={(e) => set({ hints: +e.target.value })}>
+              {range(...SETTING_BOUNDS.hints).map((n) => (
+                <option key={n} value={n}>
+                  {n === 0 ? "None" : n}
+                </option>
+              ))}
+            </select>
+          </Field>
+
+          <div className="field wide">
+            <span>Word mode</span>
+            <div className="segmented" role="radiogroup" aria-label="Word mode">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={s.wordMode === m.id}
+                  className={s.wordMode === m.id ? "on" : ""}
+                  title={m.hint}
+                  onClick={() => set({ wordMode: m.id })}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <small className="muted">{MODES.find((m) => m.id === s.wordMode)?.hint}</small>
+          </div>
+
+          {!view.isPublic && (
+            <div className="field wide">
+              <label htmlFor="set-words">
+                Custom words <small className="muted">comma-separated · {customCount} added</small>
+              </label>
+              <textarea
+                id="set-words"
+                rows={3}
+                value={words}
+                placeholder="tarsier, jeepney, halo-halo, rubber duck"
+                onFocus={() => setEditing(true)}
+                onBlur={() => {
+                  setEditing(false);
+                  if (words !== s.customWords) set({ customWords: words });
+                }}
+                onChange={(e) => setWords(e.target.value)}
+              />
+              <label className="check">
+                <input id="set-custom-only" type="checkbox" checked={s.customOnly} onChange={(e) => set({ customOnly: e.target.checked })} />
+                Use custom words only
+              </label>
+            </div>
+          )}
+        </fieldset>
+
+        <div className="start-row">
+          {view.isPublic ? (
+            <p className="status">
+              {enough && countdown !== null ? (
+                <>
+                  Starting in <b>{countdown}</b>…
+                </>
+              ) : (
+                "Waiting for one more player to join…"
+              )}
+            </p>
+          ) : isHost ? (
+            <button type="button" className="btn primary big" disabled={!enough} onClick={g.start}>
+              {enough ? "Start game" : "Waiting for players (1/2)"}
+            </button>
+          ) : (
+            <p className="status">Waiting for the host to start the game…</p>
+          )}
+        </div>
+      </section>
+
+      <section className="panel cabinet lobby-chat" aria-label="Chat">
+        <Chat />
+      </section>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="field">
+      <span>{label}</span>
+      {children}
+    </label>
+  );
+}

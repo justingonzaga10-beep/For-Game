@@ -129,6 +129,7 @@ describe("profanity filter", () => {
   it("catches common words and disguises", () => {
     expect(containsProfanity("shit")).toBe(true);
     expect(containsProfanity("sh1t head")).toBe(true);
+    expect(containsProfanity("sh1thead")).toBe(true);
     expect(containsProfanity("f u c k")).toBe(true);
     expect(containsProfanity("Putangina")).toBe(true);
     expect(containsProfanity("gago")).toBe(true);

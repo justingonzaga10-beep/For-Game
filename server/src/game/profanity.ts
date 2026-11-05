@@ -6,13 +6,13 @@
  */
 const SHORT = [
   // English
-  "ass", "fag", "cum", "tit", "tits", "dick", "cock", "fuk", "fck", "shit", "piss", "slut", "twat", "porn", "sex", "nazi", "cunt", "jizz", "dyke", "rape", "horny",
+  "ass", "fag", "cum", "tit", "tits", "dick", "cock", "fuk", "fck", "piss", "slut", "twat", "porn", "sex", "nazi", "cunt", "jizz", "dyke", "rape", "horny",
   // Tagalog
   "puta", "gago", "gaga", "bobo", "ulol", "olol", "tite", "titi", "puke", "pota", "kupal", "burat", "tamod", "jakol", "bilat", "pekpek", "pakyu", "tanga",
 ];
 const LONG = [
   // English
-  "fuck", "bitch", "asshole", "bastard", "whore", "faggot", "nigger", "nigga", "retard", "motherfucker", "wanker", "dildo", "penis", "vagina", "pussy", "boobs", "blowjob", "handjob", "hitler",
+  "fuck", "shit", "bitch", "asshole", "bastard", "whore", "faggot", "nigger", "nigga", "retard", "motherfucker", "wanker", "dildo", "penis", "vagina", "pussy", "boobs", "blowjob", "handjob", "hitler",
   // Tagalog
   "putangina", "putanginamo", "tangina", "tanginamo", "punyeta", "tarantado", "kantot", "kantutan", "hindot", "pakshet", "kingina", "pucha",
 ];
