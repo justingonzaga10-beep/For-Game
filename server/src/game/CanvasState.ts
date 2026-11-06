@@ -30,6 +30,13 @@ export class CanvasState {
     return out;
   }
 
+  /** Starts from saved actions (a player coming back after a reload). */
+  load(actions: readonly DrawAction[]): void {
+    this.reset();
+    this.actionsList = actions.map((a) => (a.t === "stroke" ? { ...a, pts: [...a.pts] } : { ...a }));
+    for (const a of this.actionsList) if (a.t === "stroke") this.points += a.pts.length / 3;
+  }
+
   reset(): void {
     this.actionsList = [];
     this.stroke = null;

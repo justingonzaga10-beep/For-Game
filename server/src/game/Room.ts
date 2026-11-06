@@ -13,6 +13,7 @@ import {
   type RoomView,
 } from "@inkwave/shared";
 import type { GameMode, NewPlayer, Player, RemovalReason, RoomContext, RoomTransport } from "./GameMode";
+import { DrawOffMode } from "./DrawOffMode";
 import { GuessMode } from "./GuessMode";
 import { maskProfanity } from "./profanity";
 import { TokenBucket } from "./rateLimit";
@@ -39,6 +40,7 @@ export class Room implements RoomContext {
   podium: PodiumEntry[] | null = null;
 
   private readonly guess: GuessMode;
+  readonly drawOff: DrawOffMode;
   private mode: GameMode;
 
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -61,6 +63,7 @@ export class Room implements RoomContext {
   ) {
     this.settings = { ...settings };
     this.guess = new GuessMode(this);
+    this.drawOff = new DrawOffMode(this);
     this.mode = this.guess;
   }
 
@@ -173,9 +176,9 @@ export class Room implements RoomContext {
     this.sync();
   }
 
-  /** The mode the current settings ask for. */
+  /** The mode the current settings ask for. Public rooms always play guessing. */
   private modeForSettings(): GameMode {
-    return this.guess;
+    return this.settings.mode === "drawoff" && !this.isPublic ? this.drawOff : this.guess;
   }
 
   requestStart(byId: string): void {
@@ -263,6 +266,16 @@ export class Room implements RoomContext {
   handleDraw(byId: string, raw: unknown): void {
     if (!this.inGame || !Array.isArray(raw)) return;
     this.mode.handleDraw(byId, raw);
+  }
+
+  /** Draw-Off: a star rating for the drawing on screen. */
+  vote(byId: string, entryId: unknown, stars: unknown): void {
+    if (this.inGame) this.mode.vote?.(byId, entryId, stars);
+  }
+
+  /** Draw-Off: the host ends the gallery early. */
+  hostContinue(byId: string): void {
+    if (this.inGame && byId === this.hostId) this.mode.hostContinue?.();
   }
 
   handleChat(byId: string, raw: unknown): void {

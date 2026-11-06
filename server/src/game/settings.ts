@@ -1,6 +1,7 @@
-import { DEFAULT_SETTINGS, LIMITS, SETTING_BOUNDS, isLanguage, type RoomSettings, type WordMode } from "@inkwave/shared";
+import { DEFAULT_SETTINGS, LIMITS, SETTING_BOUNDS, isLanguage, type GameModeId, type RoomSettings, type WordMode } from "@inkwave/shared";
 
 const MODES: WordMode[] = ["normal", "hidden", "combination"];
+const GAME_MODE_IDS: GameModeId[] = ["guess", "drawoff"];
 
 function clampInt(v: unknown, [min, max]: readonly [number, number], fallback: number): number {
   const n = typeof v === "number" ? v : Number(v);
@@ -24,6 +25,8 @@ export function applySettingsPatch(current: RoomSettings, patch: unknown, minPla
     next.customWords = p.customWords.replace(/[\p{Cc}\p{Cf}]/gu, " ").slice(0, LIMITS.customWords);
   }
   if ("customOnly" in p) next.customOnly = p.customOnly === true;
+  if ("mode" in p && GAME_MODE_IDS.includes(p.mode as GameModeId)) next.mode = p.mode as GameModeId;
+  if ("drawOffTime" in p) next.drawOffTime = clampInt(p.drawOffTime, SETTING_BOUNDS.drawOffTime, current.drawOffTime);
   return next;
 }
 

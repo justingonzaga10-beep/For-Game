@@ -30,11 +30,27 @@ export const TIMING = {
   revealSeconds: 5,
   podiumSeconds: 9,
   publicAutoStartSeconds: 8,
+  /** Draw-Off: how long each drawing is on screen for voting. */
+  drawOffVoteSeconds: 10,
+  /** Draw-Off: reveal of who drew what. */
+  drawOffResultsSeconds: 10,
+  /** Draw-Off: browsing the round's drawings (the host can skip ahead). */
+  drawOffGallerySeconds: 20,
 } as const;
+
+/** "guess": one draws, the rest guess. "drawoff": everyone draws the same theme, then rates each other. */
+export type GameModeId = "guess" | "drawoff";
+export const GAME_MODES: { id: GameModeId; label: string }[] = [
+  { id: "guess", label: "Guessing" },
+  { id: "drawoff", label: "Draw-Off" },
+];
+/** Draw-Off needs three players so everyone has at least two drawings to rate. */
+export const DRAWOFF_MIN_PLAYERS = 3;
 
 export type WordMode = "normal" | "hidden" | "combination";
 
 export interface RoomSettings {
+  mode: GameModeId;
   maxPlayers: number;
   rounds: number;
   drawTime: number;
@@ -44,6 +60,8 @@ export interface RoomSettings {
   language: LanguageCode;
   customWords: string;
   customOnly: boolean;
+  /** Draw-Off drawing time in seconds. */
+  drawOffTime: number;
 }
 
 export const SETTING_BOUNDS = {
@@ -52,9 +70,11 @@ export const SETTING_BOUNDS = {
   drawTime: [15, 240],
   wordChoices: [1, 5],
   hints: [0, 5],
+  drawOffTime: [30, 240],
 } as const;
 
 export const DEFAULT_SETTINGS: RoomSettings = {
+  mode: "guess",
   maxPlayers: 10,
   rounds: 3,
   drawTime: 80,
@@ -64,6 +84,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   language: "en",
   customWords: "",
   customOnly: false,
+  drawOffTime: 90,
 };
 
 /** Brush sizes in logical pixels, selected with keys 1-5. */

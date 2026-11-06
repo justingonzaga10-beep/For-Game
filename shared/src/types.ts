@@ -48,7 +48,61 @@ export interface PlayerView {
   kickVotes: number;
 }
 
-export type Phase = "lobby" | "choosing" | "drawing" | "reveal" | "podium";
+export type Phase =
+  | "lobby"
+  // Guessing mode
+  | "choosing"
+  | "drawing"
+  | "reveal"
+  // Draw-Off mode
+  | "drawoff_drawing"
+  | "drawoff_voting"
+  | "drawoff_results"
+  | "drawoff_gallery"
+  // Both: final scores
+  | "podium";
+
+/** A Draw-Off drawing, identified only by a random id until results. */
+export interface DrawOffEntry {
+  entryId: string;
+  actions: DrawAction[];
+}
+
+export interface DrawOffResult {
+  entryId: string;
+  playerId: string;
+  name: string;
+  avatar: Avatar;
+  /** Average stars received, 1 to 5; 1 when nobody voted. */
+  rating: number;
+  votes: number;
+  points: number;
+  /** 1 = best; ties share a rank. */
+  rank: number;
+}
+
+/** What one player sees of a Draw-Off round. */
+export interface DrawOffView {
+  theme: string | null;
+  /** Joined mid-round: watching now, drawing from the next round. */
+  spectating: boolean;
+  /** Players drawing this round. */
+  participantIds: string[];
+  /** Voting: the drawing on screen. */
+  current: {
+    entryId: string;
+    /** 1-based position and total, e.g. drawing 2 of 5. */
+    index: number;
+    total: number;
+    isYours: boolean;
+    canVote: boolean;
+    yourStars: number | null;
+    votesIn: number;
+    votersNeeded: number;
+  } | null;
+  /** Results and gallery: every drawing with its author and rating, best first. */
+  results: DrawOffResult[] | null;
+}
 
 export type TurnEndReason = "time" | "all_guessed" | "drawer_left" | "skipped";
 
@@ -95,6 +149,8 @@ export interface RoomView {
   /** Server clock at send time, for clock-offset correction. */
   serverNow: number;
   reveal: RevealInfo | null;
+  /** Draw-Off state, or null in guessing mode. */
+  drawOff: DrawOffView | null;
   podium: PodiumEntry[] | null;
   /** Ids you have voted to kick. */
   yourKickVotes: string[];
@@ -147,6 +203,10 @@ export interface ClientToServerEvents {
   "mod:kick": (playerId: string) => void;
   "mod:ban": (playerId: string) => void;
   "mod:votekick": (playerId: string) => void;
+  /** Draw-Off: rate the drawing on screen 1-5 stars. Changing your mind replaces your vote. */
+  "drawoff:vote": (entryId: string, stars: number) => void;
+  /** Draw-Off: the host ends the gallery early. */
+  "drawoff:continue": () => void;
 }
 
 export interface ServerToClientEvents {
@@ -161,6 +221,10 @@ export interface ServerToClientEvents {
   /** You were removed from the room. */
   "room:removed": (info: { reason: "kicked" | "banned" | "votekicked" }) => void;
   notice: (text: string) => void;
+  /** Draw-Off: replaces your private canvas (empty at the start of a round). */
+  "drawoff:canvas": (actions: DrawAction[]) => void;
+  /** Draw-Off: every drawing of the round, sent once when voting starts. */
+  "drawoff:entries": (entries: DrawOffEntry[]) => void;
 }
 
 export interface SocketData {

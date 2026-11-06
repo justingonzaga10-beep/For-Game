@@ -167,6 +167,8 @@ io.on("connection", (socket) => {
   socket.on("mod:kick", guard((id) => roomOf(socket)?.kick(socket.id, String(id))));
   socket.on("mod:ban", guard((id) => roomOf(socket)?.kick(socket.id, String(id), true)));
   socket.on("mod:votekick", guard((id) => roomOf(socket)?.voteKick(socket.id, String(id))));
+  socket.on("drawoff:vote", guard((entryId, stars) => roomOf(socket)?.vote(socket.id, entryId, stars)));
+  socket.on("drawoff:continue", guard(() => roomOf(socket)?.hostContinue(socket.id)));
   socket.on("disconnect", () => leaveRoom(socket));
 });
 

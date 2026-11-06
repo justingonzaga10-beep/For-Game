@@ -276,6 +276,7 @@ export class GuessMode implements GameMode {
       word: drawing && seesWord ? this.word : phase === "reveal" ? this.reveal?.word ?? null : null,
       choices: phase === "choosing" && playerId === this.drawerId ? this.choices : null,
       reveal: phase === "reveal" ? this.reveal : null,
+      drawOff: null,
     };
   }
 }

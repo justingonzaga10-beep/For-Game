@@ -63,7 +63,7 @@ export interface RoomContext {
 }
 
 /** The parts of a player's view that depend on the mode. */
-export type ModeView = Pick<RoomView, "drawerId" | "pattern" | "word" | "choices" | "reveal">;
+export type ModeView = Pick<RoomView, "drawerId" | "pattern" | "word" | "choices" | "reveal" | "drawOff">;
 
 export interface GameMode {
   /** Fewest players the mode can run with; below this a running game returns to the lobby. */
@@ -79,6 +79,10 @@ export interface GameMode {
   /** A player was removed during a game. Return true if the mode already synced the room. */
   onLeave(playerId: string): boolean;
   handleDraw(byId: string, ops: unknown[]): void;
+  /** Draw-Off only: a star rating for the drawing on screen. */
+  vote?(byId: string, entryId: unknown, stars: unknown): void;
+  /** Draw-Off only: the host ends the gallery early. */
+  hostContinue?(): void;
   /** Return true if the mode handled the message; otherwise it is broadcast as normal chat. */
   handleChat(p: Player, text: string): boolean;
   view(playerId: string): ModeView;
