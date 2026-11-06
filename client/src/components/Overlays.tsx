@@ -111,7 +111,7 @@ function Confetti() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const c = ref.current!;
     const ctx = c.getContext("2d")!;
-    const colors = ["#ff2bd6", "#18e7ff", "#9dff3a", "#ffe14d", "#a46bff"];
+    const colors = ["#e8399a", "#f5c42c", "#ffffff", "#ffdc6b", "#f07ab5"];
     let w = 0;
     let h = 0;
     const resize = () => {

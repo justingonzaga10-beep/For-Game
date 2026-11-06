@@ -109,7 +109,7 @@ export function Avatar({ avatar, size = 48, className = "", title }: { avatar: A
     >
       <g className="avatar-glow">
         <Top kind={avatar.top} c={c} head={avatar.head} />
-        <g fill="#140a2e" stroke={c} strokeWidth="4" strokeLinejoin="round">
+        <g fill="#2a2a2e" stroke={c} strokeWidth="4" strokeLinejoin="round">
           {HEADS[avatar.head] ?? HEADS[0]}
         </g>
         <Eyes kind={avatar.eyes} c={c} />
