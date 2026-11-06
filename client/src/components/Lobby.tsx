@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LANGUAGES, SETTING_BOUNDS, type RoomSettings, type WordMode } from "@inkwave/shared";
+import { DRAWOFF_MIN_PLAYERS, LANGUAGES, SETTING_BOUNDS, type GameModeId, type RoomSettings, type WordMode } from "@inkwave/shared";
 import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
@@ -7,6 +7,13 @@ import { Chat } from "./Chat";
 import { PlayerActions } from "./PlayerActions";
 
 const DRAW_TIMES = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 180, 210, 240];
+const DRAWOFF_TIMES = [30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
+const GAME_MODE_CARDS: { id: GameModeId; title: string; blurb: string }[] = [
+  { id: "guess", title: "Guessing", blurb: "One player draws, everyone else races to guess the word." },
+  { id: "drawoff", title: "Draw-Off", blurb: "Everyone draws the same theme, then rates each other's art." },
+];
+/** Keeps the current value selectable even if it isn't one of the presets. */
+const withValue = (list: number[], v: number) => (list.includes(v) ? list : [...list, v].sort((a, b) => a - b));
 const range = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
 const MODES: { id: WordMode; label: string; hint: string }[] = [
   { id: "normal", label: "Normal", hint: "Blanks show the letter count" },
@@ -49,7 +56,9 @@ export function Lobby() {
     }
   };
 
-  const enough = view.players.length >= 2;
+  const isDrawOff = s.mode === "drawoff" && !view.isPublic;
+  const minPlayers = isDrawOff ? DRAWOFF_MIN_PLAYERS : 2;
+  const enough = view.players.length >= minPlayers;
   const customCount = s.customWords.split(",").filter((w) => w.trim()).length;
 
   return (
@@ -105,6 +114,29 @@ export function Lobby() {
         </div>
 
         <fieldset className="settings-grid" disabled={!isHost}>
+          {!view.isPublic && (
+            <div className="field wide">
+              <span>Game mode</span>
+              <div className="mode-cards" role="radiogroup" aria-label="Game mode">
+                {GAME_MODE_CARDS.map((m) => (
+                  <button
+                    key={m.id}
+                    id={`mode-${m.id}`}
+                    type="button"
+                    role="radio"
+                    aria-checked={s.mode === m.id}
+                    className={`mode-card ${s.mode === m.id ? "on" : ""}`}
+                    onClick={() => set({ mode: m.id })}
+                  >
+                    <b>{m.title}</b>
+                    <span>{m.blurb}</span>
+                  </button>
+                ))}
+              </div>
+              {isDrawOff && <small className="muted">Needs at least {DRAWOFF_MIN_PLAYERS} players. Themes are in English.</small>}
+            </div>
+          )}
+          {!isDrawOff && (
           <Field label="Language">
             <select id="set-language" value={s.language} onChange={(e) => set({ language: e.target.value as RoomSettings["language"] })}>
               {LANGUAGES.map((l) => (
@@ -114,6 +146,7 @@ export function Lobby() {
               ))}
             </select>
           </Field>
+          )}
           <Field label="Players">
             <select id="set-max" value={s.maxPlayers} onChange={(e) => set({ maxPlayers: +e.target.value })}>
               {range(...SETTING_BOUNDS.maxPlayers).map((n) => (
@@ -132,9 +165,22 @@ export function Lobby() {
               ))}
             </select>
           </Field>
+          {isDrawOff && (
+            <Field label="Draw time">
+              <select id="set-drawoff-time" value={s.drawOffTime} onChange={(e) => set({ drawOffTime: +e.target.value })}>
+                {withValue(DRAWOFF_TIMES, s.drawOffTime).map((n) => (
+                  <option key={n} value={n}>
+                    {n} s
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {!isDrawOff && (
+          <>
           <Field label="Draw time">
             <select id="set-time" value={s.drawTime} onChange={(e) => set({ drawTime: +e.target.value })}>
-              {(DRAW_TIMES.includes(s.drawTime) ? DRAW_TIMES : [...DRAW_TIMES, s.drawTime].sort((a, b) => a - b)).map((n) => (
+              {withValue(DRAW_TIMES, s.drawTime).map((n) => (
                 <option key={n} value={n}>
                   {n} s
                 </option>
@@ -203,6 +249,8 @@ export function Lobby() {
               </label>
             </div>
           )}
+          </>
+          )}
         </fieldset>
 
         <div className="start-row">
@@ -218,7 +266,7 @@ export function Lobby() {
             </p>
           ) : isHost ? (
             <button type="button" className="btn primary big" disabled={!enough} onClick={g.start}>
-              {enough ? "Start game" : "Waiting for players (1/2)"}
+              {enough ? `Start ${isDrawOff ? "Draw-Off" : "game"}` : `Waiting for players (${view.players.length}/${minPlayers})`}
             </button>
           ) : (
             <p className="status">Waiting for the host to start the game…</p>

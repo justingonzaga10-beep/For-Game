@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { ChatMessage, DrawAction, DrawOp, JoinResult, Profile, RoomSettings, RoomView } from "@inkwave/shared";
+import type { ChatMessage, DrawAction, DrawOffEntry, DrawOp, JoinResult, Profile, RoomSettings, RoomView } from "@inkwave/shared";
 import { CanvasLog } from "../canvas/canvasLog";
 import { socket } from "./socket";
 
@@ -13,6 +13,10 @@ interface GameApi {
   removed: Removal | null;
   notice: string | null;
   canvasLog: CanvasLog;
+  /** Draw-Off: your private canvas for this round. */
+  drawOffLog: CanvasLog;
+  /** Draw-Off: this round's drawings by entry id, received when voting starts. */
+  drawOffEntries: Record<string, DrawAction[]>;
   /** Server time now, corrected for this device's clock. */
   serverNow: () => number;
   quickplay: (p: Profile) => Promise<JoinResult>;
@@ -23,6 +27,10 @@ interface GameApi {
   start: () => void;
   choose: (i: number) => void;
   sendDraw: (ops: DrawOp[]) => void;
+  /** Draw-Off: ops for your private canvas (only the server sees them). */
+  sendPrivateDraw: (ops: DrawOp[]) => void;
+  vote: (entryId: string, stars: number) => void;
+  drawOffContinue: () => void;
   sendChat: (text: string) => void;
   kick: (id: string) => void;
   ban: (id: string) => void;
@@ -42,6 +50,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState<string | null>(null);
   const offset = useRef(0);
   const canvasLog = useMemo(() => new CanvasLog(), []);
+  const drawOffLog = useMemo(() => new CanvasLog(), []);
+  const [drawOffEntries, setDrawOffEntries] = useState<Record<string, DrawAction[]>>({});
   const fx = useRef(new Set<FxListener>());
   const roomCode = useRef<string | null>(null);
   /** Where to rejoin after a dropped connection (wifi blip, server restart). */
@@ -58,6 +68,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const onChat = (m: ChatMessage) => setChat((c) => (c.length >= MAX_CHAT ? [...c.slice(-MAX_CHAT + 1), m] : [...c, m]));
     const onDraw = (ops: DrawOp[]) => canvasLog.push(ops, true);
     const onReplay = (a: DrawAction[]) => canvasLog.replay(a);
+    const onDrawOffCanvas = (a: DrawAction[]) => drawOffLog.replay(a);
+    const onDrawOffEntries = (list: DrawOffEntry[]) => setDrawOffEntries(Object.fromEntries(list.map((e) => [e.entryId, e.actions])));
     const onFx = (f: { playerId: string; points: number }) => fx.current.forEach((l) => l(f));
     const onRemoved = ({ reason }: { reason: Removal }) => {
       roomCode.current = null;
@@ -93,6 +105,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on("fx:guessed", onFx);
     socket.on("room:removed", onRemoved);
     socket.on("notice", onNotice);
+    socket.on("drawoff:canvas", onDrawOffCanvas);
+    socket.on("drawoff:entries", onDrawOffEntries);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     return () => {
@@ -103,11 +117,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       socket.off("fx:guessed", onFx);
       socket.off("room:removed", onRemoved);
       socket.off("notice", onNotice);
+      socket.off("drawoff:canvas", onDrawOffCanvas);
+      socket.off("drawoff:entries", onDrawOffEntries);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       clearTimeout(noticeTimer);
     };
-  }, [canvasLog]);
+  }, [canvasLog, drawOffLog]);
 
   const enter = useCallback(
     (p: Promise<JoinResult>, profile: Profile) =>
@@ -137,6 +153,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     removed,
     notice,
     canvasLog,
+    drawOffLog,
+    drawOffEntries,
     serverNow: () => Date.now() + offset.current,
     quickplay: (p) => {
       setChat([]);
@@ -157,6 +175,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setView(null);
       setChat([]);
       canvasLog.replay([]);
+      drawOffLog.replay([]);
+      setDrawOffEntries({});
     },
     updateSettings: (patch) => socket.emit("room:settings", patch),
     start: () => socket.emit("game:start"),
@@ -165,6 +185,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       canvasLog.push(ops, false);
       socket.emit("draw", ops);
     },
+    sendPrivateDraw: (ops) => {
+      drawOffLog.push(ops, false);
+      socket.emit("draw", ops);
+    },
+    vote: (entryId, stars) => socket.emit("drawoff:vote", entryId, stars),
+    drawOffContinue: () => socket.emit("drawoff:continue"),
     sendChat: (text) => socket.emit("chat", text),
     kick: (id) => socket.emit("mod:kick", id),
     ban: (id) => socket.emit("mod:ban", id),

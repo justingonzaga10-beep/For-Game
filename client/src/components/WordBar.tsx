@@ -92,16 +92,17 @@ export function TimerRing({ urgent }: { urgent: boolean }) {
   const { view } = useGame();
   const left = useCountdown();
   if (!view) return null;
-  const total =
-    view.phase === "drawing"
-      ? view.settings.drawTime
-      : view.phase === "choosing"
-        ? TIMING.chooseSeconds
-        : view.phase === "reveal"
-          ? TIMING.revealSeconds
-          : view.phase === "podium"
-            ? TIMING.podiumSeconds
-            : TIMING.publicAutoStartSeconds;
+  const totals: Partial<Record<typeof view.phase, number>> = {
+    drawing: view.settings.drawTime,
+    choosing: TIMING.chooseSeconds,
+    reveal: TIMING.revealSeconds,
+    podium: TIMING.podiumSeconds,
+    drawoff_drawing: view.settings.drawOffTime,
+    drawoff_voting: TIMING.drawOffVoteSeconds,
+    drawoff_results: TIMING.drawOffResultsSeconds,
+    drawoff_gallery: TIMING.drawOffGallerySeconds,
+  };
+  const total = totals[view.phase] ?? TIMING.publicAutoStartSeconds;
   const frac = left === null ? 0 : Math.min(1, left / total);
   const R = 26;
   const C = 2 * Math.PI * R;

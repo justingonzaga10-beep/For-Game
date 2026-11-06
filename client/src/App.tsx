@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { normalizeRoomCode } from "@inkwave/shared";
+import { DrawOffScreen } from "./components/DrawOff";
 import { GameScreen } from "./components/GameScreen";
 import { Landing } from "./components/Landing";
 import { Lobby } from "./components/Lobby";
@@ -57,6 +58,9 @@ export function App() {
     document.title = view ? `Quantum Ink · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Quantum Ink";
   }, [view?.code, view?.isPublic]);
 
+  // Draw-Off phases, plus the final podium of a Draw-Off game.
+  const isDrawOff = !!view && (view.phase.startsWith("drawoff_") || (view.phase === "podium" && view.settings.mode === "drawoff" && !view.isPublic));
+
   if (!view) {
     return (
       <div className="app">
@@ -88,7 +92,7 @@ export function App() {
           navigate("/");
         }}
       />
-      {view.phase === "lobby" ? <Lobby /> : <GameScreen />}
+      {view.phase === "lobby" ? <Lobby /> : isDrawOff ? <DrawOffScreen /> : <GameScreen />}
     </div>
   );
 }
