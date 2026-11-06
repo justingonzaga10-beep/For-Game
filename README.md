@@ -1,12 +1,16 @@
 # Quantum Ink
 
-**Draw it. Guess it. Glow.** Quantum Ink is a real-time multiplayer drawing and guessing game for the browser, styled as a neon synthwave arcade. One player draws a word, everyone else races to guess it in chat, and faster guesses score more.
+**Draw it. Guess it. Glow.** Quantum Ink is a real-time multiplayer drawing game for the browser, styled as a neon synthwave arcade. It has two modes:
+
+- **Guessing:** one player draws a word, everyone else races to guess it in chat, and faster guesses score more.
+- **Draw-Off:** everyone draws the same theme at the same time, then rates each other's drawings from 1 to 5 stars.
 
 - Public matchmaking or private rooms with a shareable invite link (`/room/ABC234`)
 - Host settings: 2–20 players, 2–10 rounds, 15–240 s turns, 1–5 word choices, 0–5 letter hints, Normal / Hidden / Combination word modes, and custom word lists
 - English and Tagalog word lists (300+ family-friendly words each, in easy / medium / hard tiers)
 - Brush with 5 sizes, a 28-colour palette (left click primary, right click secondary), eraser, flood fill, undo, clear, and pen pressure
 - Live scoreboard, "+points" pops, word reveal, and a confetti podium
+- Draw-Off: private canvases, anonymous one-at-a-time star voting, a results podium and a gallery, with an editable themes file
 - Moderation: host kick and ban, majority vote-kick, local mute, rate limits, and a profanity filter
 - Neon Arcade look with toggleable CRT scanlines, a chiptune sound synth, and a phone layout
 
@@ -48,17 +52,24 @@ The server serves the built client and the game on one port (default `3001`): ht
 ```
 shared/   Types, socket event names, constants, word matching and text sanitising (used by both sides)
 server/   Express + Socket.IO game server
-  src/game/Room.ts         Authoritative room state machine: lobby → choosing → drawing → reveal → podium
+  src/game/Room.ts         The room shell every mode shares: players, host, settings, moderation, chat, timers, sync, podium
+  src/game/GameMode.ts     The interface a game mode implements, and the room context it gets
+  src/game/GuessMode.ts    Guessing: choosing → drawing → reveal, turn by turn
+  src/game/DrawOffMode.ts  Draw-Off: drawing → voting → results → gallery, round by round
+  src/game/CanvasState.ts  Server-side draw-op validation and action log (one per canvas)
   src/game/RoomManager.ts  Room codes, public matchmaking, cleanup of empty rooms
   src/game/scoring.ts      Guesser and drawer points, ranking
   src/game/hints.ts        Masking, hint schedule, letter reveal
   src/game/words.ts        Word picking, custom words, combination mode
   src/game/profanity.ts    Basic English + Tagalog filter
   src/words/*.json         Word lists
+  src/themes/en.json       Draw-Off themes (edit freely)
   test/                    Unit tests
 client/   React + Vite front end
   src/canvas/engine.ts     Deterministic drawing engine (strokes, fill, undo, replay)
-  src/canvas/DrawCanvas.tsx  Pointer/touch/pen input, 30 ms network batching
+  src/canvas/DrawCanvas.tsx  Pointer/touch/pen input, 30 ms network batching (shared or private canvas)
+  src/components/GameScreen.tsx  Guessing screen
+  src/components/DrawOff.tsx     Draw-Off screens: drawing, voting, results, gallery
   src/lib/game.tsx         Socket state, clock-offset timer, canvas log
   src/lib/sound.ts         WebAudio chiptune effects (no audio files)
 e2e/      Playwright scripts that play real games in several browser contexts
@@ -85,6 +96,25 @@ e2e/      Playwright scripts that play real games in several browser contexts
 - The turn ends when time runs out, everyone has guessed, or the drawer leaves. The word and each player's points then show for 5 s.
 - After the last round, the top three take the podium for 9 s, then the room returns to the lobby with the same settings.
 - Public rooms use default settings, start automatically 8 s after a second player arrives, and can be joined mid-game.
+
+### Draw-Off
+
+The host picks **Draw-Off** in the lobby of a private room (public rooms always play Guessing). It needs at least 3 players. The host sets the rounds (default 3) and the drawing time (default 90 s, 30–240 s).
+
+1. **Draw.** Everyone gets the same theme and draws on a private canvas. Strokes go only to the server, never to other players.
+2. **Submit.** When time runs out, every drawing is submitted automatically, blank ones included.
+3. **Vote.** Drawings appear one at a time in random order, with no names, for 10 s each. Players tap 1–5 stars (or press 1–5); tapping again changes your vote. You can't rate your own drawing, and the next drawing comes up early once everyone has voted. Votes for a drawing that has already moved on are ignored.
+4. **Results.** Names are revealed with a top-3 podium. A drawing's rating is the average of the stars it received, or 1 if nobody voted, so it never scores below the 1-star floor. Points are rating × 100 (100–500).
+5. **Gallery.** Everyone can browse the round's drawings (tap one to see it full size) for 20 s; the host can skip ahead.
+
+After the last round, the final podium shows, then the room returns to the lobby with the same settings.
+
+- A player who leaves while drawing loses their drawing. If they leave during voting, their drawing is removed (skipped at once if it's on screen); votes they already cast still count.
+- A player who reloads while drawing gets their drawing back if they return within 60 s.
+- Players who join mid-round watch and chat, then draw from the next round.
+- If fewer than 3 players remain, the game returns to the lobby.
+
+**Themes** live in `server/src/themes/en.json`. Add, remove or edit lines in the `themes` list and restart the server. A unit test checks there are at least 50, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
 
 ### Moderation and safety
 
@@ -122,6 +152,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/lobby.cjs`: create a room, invite link, settings sync, join, kick, start, quick play, profane nickname refused
 - `e2e/full-game.cjs`: three players (one on a phone-sized screen) play a complete 2-round game. Checks timer sync, blanks, close guesses, correct guesses, word secrecy, guessed-only chat, the drawer word block, turn order, podium, and the return to the lobby
 - `e2e/resilience.cjs`: public matchmaking, joining mid-game with a pixel-identical canvas, the drawer leaving mid-turn, host handoff, and score restore after a reload
+- `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).
 
