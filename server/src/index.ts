@@ -173,5 +173,5 @@ io.on("connection", (socket) => {
 });
 
 http.listen(PORT, () => {
-  console.log(`Quantum Ink server listening on http://localhost:${PORT}`);
+  console.log(`Quantum Doodle server listening on http://localhost:${PORT}`);
 });

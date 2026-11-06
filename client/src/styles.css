@@ -1,4 +1,4 @@
-/* Quantum Ink · arcade style in the Quantum Kids Education colours.
+/* Quantum Doodle · arcade style in the Quantum Kids Education colours.
    Charcoal gray ground (the shield's border), the logo's pink for primary
    actions, its gold for structure (panel borders, headings, timer), white
    text, and green for success. The canvas stays off-white so drawings
@@ -167,7 +167,7 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .logo { display: flex; align-items: center; gap: 14px; }
 .logo-mark { width: 64px; height: 64px; filter: drop-shadow(0 0 10px rgba(232, 57, 154, 0.7)); }
 .logo-word {
-  font-family: var(--f-pixel); font-size: clamp(28px, 7vw, 54px); letter-spacing: 0.04em; color: #fff;
+  font-family: var(--f-pixel); font-size: clamp(16px, 5.4vw, 54px); letter-spacing: 0.04em; color: #fff;
   text-shadow: 0 0 6px #fff, 0 0 18px var(--pink), 0 0 36px var(--pink), 3px 3px 0 #7a1747;
 }
 .logo-word span { color: var(--gold); text-shadow: 0 0 6px #fff1c2, 0 0 18px var(--gold), 0 0 36px var(--gold), 3px 3px 0 #7a5a00; }

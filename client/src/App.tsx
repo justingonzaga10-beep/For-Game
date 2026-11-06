@@ -55,7 +55,7 @@ export function App() {
   }, [path]);
 
   useEffect(() => {
-    document.title = view ? `Quantum Ink · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Quantum Ink";
+    document.title = view ? `Quantum Doodle · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Quantum Doodle";
   }, [view?.code, view?.isPublic]);
 
   // Draw-Off phases, plus the final podium of a Draw-Off game.
