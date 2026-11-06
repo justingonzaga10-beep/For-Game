@@ -1,5 +1,5 @@
 # Fly.io: `fly launch --copy-config --no-deploy`, then `fly deploy`.
-app = "inkwave"
+app = "quantumink"
 primary_region = "sin"
 
 [build]
