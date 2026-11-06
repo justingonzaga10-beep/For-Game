@@ -54,7 +54,7 @@ export function App() {
   }, [path]);
 
   useEffect(() => {
-    document.title = view ? `Inkwave · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Inkwave";
+    document.title = view ? `Quantum Ink · ${view.isPublic ? "Public room" : `Room ${view.code}`}` : "Quantum Ink";
   }, [view?.code, view?.isPublic]);
 
   if (!view) {

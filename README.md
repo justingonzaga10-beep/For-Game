@@ -1,6 +1,6 @@
-# Inkwave
+# Quantum Ink
 
-**Draw it. Guess it. Glow.** Inkwave is a real-time multiplayer drawing and guessing game for the browser, styled as a neon synthwave arcade. One player draws a word, everyone else races to guess it in chat, and faster guesses score more.
+**Draw it. Guess it. Glow.** Quantum Ink is a real-time multiplayer drawing and guessing game for the browser, styled as a neon synthwave arcade. One player draws a word, everyone else races to guess it in chat, and faster guesses score more.
 
 - Public matchmaking or private rooms with a shareable invite link (`/room/ABC234`)
 - Host settings: 2–20 players, 2–10 rounds, 15–240 s turns, 1–5 word choices, 0–5 letter hints, Normal / Hidden / Combination word modes, and custom word lists
@@ -188,4 +188,4 @@ Version 1 keeps all rooms in one process's memory. That's simple and fast, but r
 
 ## Credits
 
-All names, the logo, avatars, sounds and art in Inkwave are original. Avatars are SVG shapes and sounds are synthesised in the browser. Fonts are Press Start 2P and Chakra Petch (SIL Open Font License), bundled through Fontsource.
+All names, the logo, avatars, sounds and art in Quantum Ink are original. Avatars are SVG shapes and sounds are synthesised in the browser. Fonts are Press Start 2P and Chakra Petch (SIL Open Font License), bundled through Fontsource.

@@ -2,7 +2,7 @@
   "name": "inkwave",
   "version": "1.0.0",
   "private": true,
-  "description": "Inkwave: a neon-arcade multiplayer drawing and guessing game",
+  "description": "Quantum Ink: a neon-arcade multiplayer drawing and guessing game",
   "workspaces": [
     "shared",
     "server",

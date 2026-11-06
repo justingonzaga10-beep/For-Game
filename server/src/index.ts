@@ -171,5 +171,5 @@ io.on("connection", (socket) => {
 });
 
 http.listen(PORT, () => {
-  console.log(`Inkwave server listening on http://localhost:${PORT}`);
+  console.log(`Quantum Ink server listening on http://localhost:${PORT}`);
 });
