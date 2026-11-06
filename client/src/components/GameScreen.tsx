@@ -84,7 +84,7 @@ export function GameScreen() {
     <section className="board" aria-label="Drawing board">
       <WordBar />
       <div className="canvas-frame">
-        <DrawCanvas canDraw={isDrawer} tools={tools} engineRef={engineRef} emitRef={emitRef} />
+        <DrawCanvas source={{ log: g.canvasLog, send: g.sendDraw }} canDraw={isDrawer} tools={tools} engineRef={engineRef} emitRef={emitRef} />
         <Overlays />
       </div>
       {isDrawer && <Toolbar tools={tools} setTools={setTools} onUndo={undo} onClear={clear} />}

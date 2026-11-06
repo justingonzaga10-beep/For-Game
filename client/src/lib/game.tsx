@@ -1,26 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ChatMessage, DrawAction, DrawOp, JoinResult, Profile, RoomSettings, RoomView } from "@inkwave/shared";
+import { CanvasLog } from "../canvas/canvasLog";
 import { socket } from "./socket";
-
-/**
- * The canvas as the server sees it: the last full replay plus every op since.
- * The canvas component replays this whenever it mounts (layout switches,
- * tab changes), so nothing is lost if it isn't on screen.
- */
-class CanvasLog {
-  base: DrawAction[] = [];
-  ops: DrawOp[] = [];
-  listeners = new Set<(ev: { type: "replay" } | { type: "ops"; ops: DrawOp[] }) => void>();
-  replay(actions: DrawAction[]) {
-    this.base = actions;
-    this.ops = [];
-    this.listeners.forEach((l) => l({ type: "replay" }));
-  }
-  push(ops: DrawOp[], notify: boolean) {
-    this.ops.push(...ops);
-    if (notify) this.listeners.forEach((l) => l({ type: "ops", ops }));
-  }
-}
 
 export type FxListener = (fx: { playerId: string; points: number }) => void;
 export type Removal = "kicked" | "banned" | "votekicked";

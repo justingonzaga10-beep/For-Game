@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { CANVAS_H, CANVAS_W, PAPER, type DrawOp } from "@inkwave/shared";
-import { useGame } from "../lib/game";
+import type { CanvasLogEvent, CanvasSource } from "./canvasLog";
 import { DrawingEngine } from "./engine";
 
 export type Tool = "brush" | "eraser" | "fill";
@@ -13,6 +13,8 @@ export interface ToolState {
 }
 
 interface Props {
+  /** The picture to show and where the local player's ops go: the shared room canvas, or a private one. */
+  source: CanvasSource;
   canDraw: boolean;
   tools: ToolState;
   /** Hands the engine to the parent for undo/clear buttons. */
@@ -23,8 +25,10 @@ interface Props {
 
 const FLUSH_MS = 30;
 
-export function DrawCanvas({ canDraw, tools, engineRef, emitRef }: Props) {
-  const { canvasLog, sendDraw } = useGame();
+export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef }: Props) {
+  const canvasLog = source.log;
+  const sendRef = useRef(source.send);
+  sendRef.current = source.send;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const toolsRef = useRef(tools);
@@ -41,7 +45,7 @@ export function DrawCanvas({ canDraw, tools, engineRef, emitRef }: Props) {
       for (const op of canvasLog.ops) engine.apply(op);
     };
     sync();
-    const listener = (ev: { type: "replay" } | { type: "ops"; ops: import("@inkwave/shared").DrawOp[] }) => {
+    const listener = (ev: CanvasLogEvent) => {
       if (ev.type === "replay") sync();
       else for (const op of ev.ops) engine.apply(op);
     };
@@ -68,7 +72,7 @@ export function DrawCanvas({ canDraw, tools, engineRef, emitRef }: Props) {
       }
       queue = [];
       // Respect the server's per-batch caps by splitting large batches.
-      for (let i = 0; i < merged.length; i += 30) sendDraw(merged.slice(i, i + 30));
+      for (let i = 0; i < merged.length; i += 30) sendRef.current(merged.slice(i, i + 30));
     };
     emitRef.current = (ops) => {
       for (const op of ops) engineRef.current?.apply(op);
@@ -80,7 +84,7 @@ export function DrawCanvas({ canDraw, tools, engineRef, emitRef }: Props) {
       if (timer) clearTimeout(timer);
       emitRef.current = null;
     };
-  }, [emitRef, engineRef, sendDraw]);
+  }, [emitRef, engineRef]);
 
   // Pointer input.
   useEffect(() => {
