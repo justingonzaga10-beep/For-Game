@@ -188,4 +188,4 @@ Version 1 keeps all rooms in one process's memory. That's simple and fast, but r
 
 ## Credits
 
-All names, the logo, avatars, sounds and art in Quantum Ink are original. Avatars are SVG shapes and sounds are synthesised in the browser. Fonts are Press Start 2P and Chakra Petch (SIL Open Font License), bundled through Fontsource.
+The Quantum Kids Education shield (`brand/quantum-kids-education-logo.png`, with an optimized copy in `client/src/assets/`) belongs to Quantum Kids Education. Everything else (the Quantum Ink wordmark, avatars, sounds and art) is original: avatars are SVG shapes and sounds are synthesised in the browser. Fonts are Press Start 2P and Chakra Petch (SIL Open Font License), bundled through Fontsource.

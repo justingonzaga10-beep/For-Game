@@ -175,6 +175,17 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .logo.compact .logo-word { font-size: 15px; text-shadow: 0 0 10px var(--pink), 2px 2px 0 #7a1747; }
 .logo.compact .logo-word span { text-shadow: 0 0 10px var(--gold), 2px 2px 0 #7a5a00; }
 
+/* Quantum Kids Education shield */
+.brand-shield {
+  display: block; height: clamp(120px, 22vh, 200px); width: auto; user-select: none;
+  /* The shield's own dark border is close to the page gray, so a soft glow lifts it off the background. */
+  filter: drop-shadow(0 0 14px rgba(232, 57, 154, 0.35)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.35));
+  animation: shield-in 0.5s ease-out both;
+}
+.brand-shield.small { height: 44px; animation: none; filter: drop-shadow(0 0 6px rgba(232, 57, 154, 0.4)); }
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+@keyframes shield-in { from { transform: translateY(-8px) scale(0.96); opacity: 0; } }
+
 /* Volume / mute / CRT */
 .arcade-controls { display: flex; align-items: center; gap: 8px; }
 .icon-btn {
@@ -191,7 +202,7 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 /* Landing                                                             */
 /* ------------------------------------------------------------------ */
 .landing-controls { position: absolute; top: max(14px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); z-index: 5; }
-.landing { width: min(860px, 100%); margin: 0 auto; padding-top: clamp(56px, 9vh, 96px); display: flex; flex-direction: column; gap: 22px; }
+.landing { width: min(860px, 100%); margin: 0 auto; padding-top: clamp(24px, 4vh, 48px); display: flex; flex-direction: column; gap: 22px; }
 .landing-head { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
 .tagline { margin: 0; font-family: var(--f-pixel); font-size: 11px; color: var(--yellow); letter-spacing: 0.14em; text-shadow: 0 0 10px rgba(255, 220, 107, 0.6); }
 .landing-card { padding: 22px; display: flex; flex-direction: column; gap: 14px; }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "../lib/game";
 import { setSound, sfx, useSoundPrefs } from "../lib/sound";
 import { load, save } from "../lib/storage";
+import { BrandShield } from "./BrandShield";
 import { Logo } from "./Logo";
 
 export function useCrt(): [boolean, (on: boolean) => void] {
@@ -74,7 +75,10 @@ export function TopBar({ onLeave }: { onLeave: () => void }) {
   if (!view) return null;
   return (
     <header className="topbar">
-      <Logo compact />
+      <div className="topbar-brand">
+        <BrandShield small />
+        <Logo compact />
+      </div>
       <div className="room-tag">
         {view.isPublic ? (
           "Public room"
