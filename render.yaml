@@ -1,9 +1,9 @@
 # Render Blueprint: New > Blueprint, point it at this repo.
 services:
   - type: web
-    # The service name becomes the web address: quantumink.onrender.com
+    # The service name becomes the web address: quantumdoodle.onrender.com
     # (Render adds a short suffix if that name is already taken).
-    name: quantumink
+    name: quantumdoodle
     runtime: docker
     # Free is fine for testing (it sleeps when idle). Use "starter" for an always-on game.
     plan: free

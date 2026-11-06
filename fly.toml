@@ -1,5 +1,5 @@
 # Fly.io: `fly launch --copy-config --no-deploy`, then `fly deploy`.
-app = "quantumink"
+app = "quantumdoodle"
 primary_region = "sin"
 
 [build]
