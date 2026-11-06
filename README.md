@@ -12,7 +12,8 @@
 - Live scoreboard, "+points" pops, word reveal, and a confetti podium
 - Draw-Off: private canvases, anonymous one-at-a-time star voting, a results podium and a gallery, with an editable themes file
 - Moderation: host kick and ban, majority vote-kick, local mute, rate limits, and a profanity filter
-- Neon Arcade look with toggleable CRT scanlines, a chiptune sound synth, and a phone layout
+- Night mode (charcoal, pink and gold) and light mode (light gray, golden yellow and white), switched with the sun/moon button and following the device setting until a player picks one
+- Arcade look with toggleable CRT scanlines, a chiptune sound synth, and a phone layout
 
 ## Quick start
 

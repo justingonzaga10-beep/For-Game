@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "../lib/game";
 import { setSound, sfx, useSoundPrefs } from "../lib/sound";
 import { load, save } from "../lib/storage";
+import { setTheme, useTheme } from "../lib/theme";
 import { BrandShield } from "./BrandShield";
 import { Logo } from "./Logo";
 
@@ -56,6 +57,7 @@ export function ArcadeControls() {
         onChange={(e) => setSound({ volume: Number(e.target.value), muted: false })}
         onPointerUp={() => sfx.click()}
       />
+      <ThemeButton />
       <button
         type="button"
         className={`icon-btn crt-btn ${crt ? "on" : ""}`}
@@ -67,6 +69,32 @@ export function ArcadeControls() {
         CRT
       </button>
     </div>
+  );
+}
+
+/** Switches between night mode (dark) and light mode. */
+function ThemeButton() {
+  const theme = useTheme();
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      className="icon-btn theme-btn"
+      aria-label={next === "light" ? "Switch to light mode" : "Switch to night mode"}
+      title={next === "light" ? "Light mode" : "Night mode"}
+      onClick={() => setTheme(next)}
+    >
+      {theme === "dark" ? (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z" fill="currentColor" />
+        </svg>
+      )}
+    </button>
   );
 }
 
