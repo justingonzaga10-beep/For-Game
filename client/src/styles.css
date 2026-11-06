@@ -497,8 +497,8 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .mode-card.on { border-color: var(--pink); box-shadow: 0 0 0 1px var(--pink), 0 0 18px rgba(var(--pink-rgb), 0.35); background: rgba(var(--pink-rgb), 0.12); }
 .mode-card.on b { color: var(--pink-soft); }
 
-/* Theme in the bar: themes are phrases, so smaller than a guessing word. */
-.word-real.theme { font-size: clamp(11px, 1.5vw, 17px); line-height: 1.5; text-wrap: balance; max-width: 100%; }
+/* Theme in the bar: 1-2 words, shown as large as a guessing word. */
+.word-real.theme { font-size: clamp(14px, 2.2vw, 22px); line-height: 1.4; text-wrap: balance; max-width: 100%; }
 .board:has(.vote-panel) { --board-chrome: 330px; }
 
 /* Voting */

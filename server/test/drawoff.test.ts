@@ -313,8 +313,9 @@ describe("Draw-Off: players coming and going", () => {
 });
 
 describe("Draw-Off: themes and settings", () => {
-  it("ships 50+ unique, family-friendly themes", () => {
+  it("ships 50+ unique, family-friendly themes of 1-2 words", () => {
     expect(THEMES.length).toBeGreaterThanOrEqual(50);
+    for (const t of THEMES) expect(t.split(/\s+/).length, t).toBeLessThanOrEqual(2);
     expect(new Set(THEMES.map((t) => t.toLowerCase())).size).toBe(THEMES.length);
     for (const t of THEMES) expect(containsProfanity(t), t).toBe(false);
   });

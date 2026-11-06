@@ -115,7 +115,7 @@ After the last round, the final podium shows, then the room returns to the lobby
 - Players who join mid-round watch and chat, then draw from the next round.
 - If fewer than 3 players remain, the game returns to the lobby.
 
-**Themes** live in `server/src/themes/en.json`. Add, remove or edit lines in the `themes` list and restart the server. A unit test checks there are at least 50, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
+**Themes** live in `server/src/themes/en.json`. They are short, open prompts of 1–2 words ("Dragon", "Dream House", "Kindness") so every player can imagine them their own way. Add, remove or edit lines in the `themes` list and redeploy. A unit test checks there are at least 50, each 1–2 words, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
 
 ### Moderation and safety
 
