@@ -6,12 +6,12 @@ export interface Avatar {
   color: number;
   eyes: number;
   mouth: number;
-  /** Antenna / ear / crest topper. */
+  /** Topper: none, antenna, twin antennae, crest. */
   top: number;
 }
 
 export const AVATAR_COLORS = ["#ff2bd6", "#18e7ff", "#9dff3a", "#ffe14d", "#ff7a1a", "#a46bff", "#ff4d6d", "#4dffc3"] as const;
-export const AVATAR_PARTS = { head: 5, color: AVATAR_COLORS.length, eyes: 6, mouth: 6, top: 5 } as const;
+export const AVATAR_PARTS = { head: 5, color: AVATAR_COLORS.length, eyes: 6, mouth: 6, top: 4 } as const;
 
 export function randomAvatar(rand: () => number = Math.random): Avatar {
   const pick = (n: number) => Math.floor(rand() * n);

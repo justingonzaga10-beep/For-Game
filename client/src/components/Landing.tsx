@@ -5,6 +5,7 @@ import {
   LANGUAGES,
   LIMITS,
   randomAvatar,
+  sanitizeAvatar,
   type Avatar as AvatarData,
   type JoinResult,
   type LanguageCode,
@@ -32,7 +33,8 @@ export function loadProfile(): Profile {
   const p = load<Partial<Profile>>("profile", {});
   return {
     name: typeof p.name === "string" ? p.name : "",
-    avatar: p.avatar ?? randomAvatar(),
+    // Sanitize so avatars saved before a part was removed still load cleanly.
+    avatar: p.avatar ? sanitizeAvatar(p.avatar) : randomAvatar(),
     language: p.language === "tl" ? "tl" : "en",
   };
 }

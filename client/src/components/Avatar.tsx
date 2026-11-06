@@ -85,9 +85,7 @@ function Top({ kind, c, head }: { kind: number; c: string; head: number }) {
           <circle cx="71" cy={y - 14} r="4" fill={c} />
         </>
       );
-    case 3: // ears
-      return <path d={`M26 ${y + 10}L22 ${y - 10}L40 ${y + 2}M74 ${y + 10}L78 ${y - 10}L60 ${y + 2}`} {...s} strokeLinejoin="round" />;
-    case 4: // crest
+    case 3: // crest
       return <path d={`M36 ${y + 1}l5-12 5 10 4-13 4 13 5-10 5 12`} {...s} strokeWidth={3.5} strokeLinejoin="round" />;
     default:
       return null;
