@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameModeId } from "@inkwave/shared";
+import drawoffJpg from "../assets/tutorials/drawoff.jpg";
+import drawoffMp4 from "../assets/tutorials/drawoff.mp4";
+import guessingJpg from "../assets/tutorials/guessing.jpg";
+import guessingMp4 from "../assets/tutorials/guessing.mp4";
 import { music } from "../lib/music";
 
 const VIDEOS: Record<GameModeId, { label: string; src: string; poster: string; blurb: string }> = {
   guess: {
     label: "Guessing",
-    src: "/tutorials/guessing.mp4",
-    poster: "/tutorials/guessing.jpg",
+    // Imported, so the file name changes with the content and browsers never play a stale copy.
+    src: guessingMp4,
+    poster: guessingJpg,
     blurb: "One player draws a word. Everyone else types guesses. Faster guesses score more!",
   },
   drawoff: {
     label: "Draw-Off",
-    src: "/tutorials/drawoff.mp4",
-    poster: "/tutorials/drawoff.jpg",
+    src: drawoffMp4,
+    poster: drawoffJpg,
     blurb: "Everyone draws the same theme, then rates each other's drawings from 1 to 5 stars.",
   },
 };
@@ -38,6 +43,8 @@ function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => v
   const [tab, setTab] = useState<GameModeId>(initial);
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  /** True when the browser only let the video start muted. */
+  const [silent, setSilent] = useState(false);
   const v = VIDEOS[tab];
 
   // The videos have their own music, so pause the game's while one is open.
@@ -51,11 +58,22 @@ function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => v
     const el = videoRef.current;
     if (!el) return;
     el.muted = false;
+    setSilent(false);
     el.play().catch(() => {
       el.muted = true;
+      setSilent(true);
       void el.play().catch(() => {});
     });
   }, [tab]);
+
+  const unmute = () => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = false;
+    if (el.volume === 0) el.volume = 1;
+    void el.play().catch(() => {});
+    setSilent(false);
+  };
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -82,9 +100,30 @@ function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => v
         </div>
         <p className="howto-blurb">{v.blurb}</p>
         {/* key: switching tabs loads the other video from the start. */}
-        <video ref={videoRef} key={tab} className="howto-video" src={v.src} poster={v.poster} controls playsInline preload="auto">
-          Your browser can't play this video.
-        </video>
+        <div className="howto-stage">
+          <video
+            ref={videoRef}
+            key={tab}
+            className="howto-video"
+            src={v.src}
+            poster={v.poster}
+            controls
+            playsInline
+            preload="auto"
+            onVolumeChange={(e) => setSilent(e.currentTarget.muted)}
+          >
+            Your browser can't play this video.
+          </video>
+          {silent && (
+            <button type="button" className="btn primary sound-btn" onClick={unmute}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+                <path d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Tap for sound
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

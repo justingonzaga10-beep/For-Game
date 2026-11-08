@@ -8,7 +8,7 @@
 // (Music is added by tools/add-music.ts, run automatically.)
 //   node tools/record-tutorials.cjs
 // It starts its own server on port 3099 and writes
-//   client/public/tutorials/{guessing,drawoff}.mp4 and .jpg (posters).
+//   client/src/assets/tutorials/{guessing,drawoff}.mp4 and .jpg (posters).
 const { chromium } = require("playwright");
 const { spawn, execFileSync } = require("node:child_process");
 const fs = require("node:fs");
@@ -16,7 +16,7 @@ const os = require("node:os");
 const path = require("node:path");
 
 const ROOT = path.resolve(__dirname, "..");
-const OUT = path.join(ROOT, "client/public/tutorials");
+const OUT = path.join(ROOT, "client/src/assets/tutorials");
 const PORT = 3099;
 const BASE = `http://localhost:${PORT}`;
 const W = 1280;

@@ -1,6 +1,6 @@
 // Adds Quantum Doodle's background tune (shared/src/music.ts) to MP4 videos,
 // replacing any existing audio. Usage:
-//   npx tsx tools/add-music.ts client/public/tutorials/guessing.mp4 [more.mp4 ...]
+//   npx tsx tools/add-music.ts client/src/assets/tutorials/guessing.mp4 [more.mp4 ...]
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";

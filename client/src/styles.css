@@ -605,6 +605,10 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .howto-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .howto-head h2 { font-family: var(--f-pixel); font-size: 14px; color: var(--gold); }
 .howto-blurb { margin: 0; color: var(--muted); }
+.howto-stage { position: relative; }
+.sound-btn { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); z-index: 2; white-space: nowrap; animation: sound-glow 1.6s ease-in-out infinite; }
+@keyframes sound-glow { 50% { box-shadow: 0 0 0 6px rgba(var(--pink-rgb), 0.3), 0 0 24px rgba(var(--pink-rgb), 0.6); } }
+.sound-btn svg { width: 20px; height: 20px; }
 .howto-video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #1c1c1f; }
 :root[data-theme="light"] .howto { background: rgba(60, 60, 70, 0.55); }
 :root[data-theme="light"] .howto-head h2 { color: #a77d00; }
