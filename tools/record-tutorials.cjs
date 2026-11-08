@@ -5,6 +5,7 @@
 // Idle waiting (e.g. the rest of a Draw-Off timer) is sped up afterwards.
 //
 // Needs Playwright (npm i --no-save playwright) and ffmpeg. Build first, then:
+// (Music is added by tools/add-music.ts, run automatically.)
 //   node tools/record-tutorials.cjs
 // It starts its own server on port 3099 and writes
 //   client/public/tutorials/{guessing,drawoff}.mp4 and .jpg (posters).
@@ -311,7 +312,7 @@ async function recordDrawOff(browser) {
 
 /* ------------------------------------------------------------------ */
 
-/** Speeds up idle spans 8x, then encodes an MP4 (H.264, plays everywhere) and a JPEG poster. */
+/** Speeds up idle spans 8x, encodes an MP4 (H.264, plays everywhere), adds the music, and saves a JPEG poster. */
 function encode({ raw, fast, name }, posterAt) {
   const dur = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", raw]).toString().trim());
   const segs = [];
@@ -326,6 +327,8 @@ function encode({ raw, fast, name }, posterAt) {
   const filter = `${parts.join(";")};${segs.map((_, i) => `[v${i}]`).join("")}concat=n=${segs.length}:v=1:a=0,fps=30,format=yuv420p[out]`;
   const mp4 = path.join(OUT, `${name}.mp4`);
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", raw, "-filter_complex", filter, "-map", "[out]", "-c:v", "libx264", "-preset", "slow", "-crf", "27", "-movflags", "+faststart", mp4]);
+  // Background music: the same tune the game plays (shared/src/music.ts).
+  execFileSync("npx", ["tsx", path.join(ROOT, "tools/add-music.ts"), mp4], { cwd: ROOT, stdio: "inherit" });
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-ss", String(posterAt), "-i", mp4, "-frames:v", "1", "-q:v", "4", path.join(OUT, `${name}.jpg`)]);
   const out = Number(execFileSync("ffprobe", ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", mp4]).toString().trim());
   console.log(`${name}.mp4: ${out.toFixed(1)} s, ${(fs.statSync(mp4).size / 1e6).toFixed(1)} MB`);

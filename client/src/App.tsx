@@ -6,6 +6,8 @@ import { Landing } from "./components/Landing";
 import { Lobby } from "./components/Lobby";
 import { ArcadeControls, TopBar } from "./components/TopBar";
 import { useGame } from "./lib/game";
+import { music } from "./lib/music";
+import { useSoundPrefs } from "./lib/sound";
 import { useGameSounds } from "./lib/useGameSounds";
 
 /** Synthwave backdrop: horizon sun and a scrolling perspective grid. */
@@ -40,6 +42,14 @@ export function App() {
   const linkCode = normalizeRoomCode(path.match(/^\/room\/([^/]+)/)?.[1] ?? "");
   const view = g.view;
   useGameSounds();
+  const { music: musicOn } = useSoundPrefs();
+
+  // Quiet background music while in a room (lobby and games), if it's switched on.
+  const inRoom = !!view;
+  useEffect(() => {
+    if (inRoom && musicOn) music.start();
+    else music.stop();
+  }, [inRoom, musicOn]);
 
   // Keep the address bar on the room you're in, so it can be shared or reloaded.
   useEffect(() => {

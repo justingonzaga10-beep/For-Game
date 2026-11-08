@@ -11,9 +11,17 @@ let master: GainNode | null = null;
 interface SoundPrefs {
   volume: number;
   muted: boolean;
+  /** Background music in rooms (quiet, on by default). */
+  music: boolean;
 }
-let prefs: SoundPrefs = load<SoundPrefs>("sound", { volume: 0.5, muted: false });
+let prefs: SoundPrefs = { volume: 0.5, muted: false, music: true, ...load<Partial<SoundPrefs>>("sound", {}) };
 const listeners = new Set<() => void>();
+
+/** The shared audio context and master volume, for the music player. Null if audio isn't supported. */
+export function audioGraph(): { ctx: AudioContext; master: GainNode } | null {
+  const a = audio();
+  return a && master ? { ctx: a, master } : null;
+}
 
 function audio(): AudioContext | null {
   if (!ctx) {

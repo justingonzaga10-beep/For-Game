@@ -57,6 +57,21 @@ export function ArcadeControls() {
         onChange={(e) => setSound({ volume: Number(e.target.value), muted: false })}
         onPointerUp={() => sfx.click()}
       />
+      <button
+        type="button"
+        className={`icon-btn music-btn ${sound.music ? "on" : ""}`}
+        aria-pressed={sound.music}
+        aria-label={sound.music ? "Turn music off" : "Turn music on"}
+        title={sound.music ? "Music on" : "Music off"}
+        onClick={() => setSound({ music: !sound.music })}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 18V6l10-2v12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          <circle cx="6.5" cy="18" r="2.5" fill="currentColor" />
+          <circle cx="16.5" cy="16" r="2.5" fill="currentColor" />
+          {!sound.music && <path d="M4 4l16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />}
+        </svg>
+      </button>
       <ThemeButton />
       <button
         type="button"

@@ -13,7 +13,7 @@
 - Draw-Off: private canvases, anonymous one-at-a-time star voting, a results podium and a gallery, with an editable themes file
 - Moderation: host kick and ban, majority vote-kick, local mute, rate limits, and a profanity filter
 - Night mode (charcoal, pink and gold) and light mode (light gray, golden yellow and white), switched with the sun/moon button and following the device setting until a player picks one
-- Arcade look with toggleable CRT scanlines, a chiptune sound synth, and a phone layout
+- Arcade look with toggleable CRT scanlines, chiptune sound effects, quiet background music (an original loop, switched with the music button), and a phone layout
 
 ## Quick start
 
@@ -115,7 +115,7 @@ After the last round, the final podium shows, then the room returns to the lobby
 - Players who join mid-round watch and chat, then draw from the next round.
 - If fewer than 3 players remain, the game returns to the lobby.
 
-**How-to-play videos.** The start page ("Watch how to play") and the lobby ("How to play") open short silent videos for both modes, recorded from real games with captions. They live in `client/public/tutorials/`. To re-record them after the game changes, build the app, then run `node tools/record-tutorials.cjs` (needs Playwright and ffmpeg). It plays scripted games on its own local server and writes new MP4s and poster images.
+**How-to-play videos.** The start page ("Watch how to play") and the lobby ("How to play") open short videos for both modes, recorded from real games with captions and the game's background tune (in-game music pauses while one plays). They live in `client/public/tutorials/`. To re-record them after the game changes, build the app, then run `node tools/record-tutorials.cjs` (needs Playwright and ffmpeg). It plays scripted games on its own local server and writes new MP4s (with music, via `tools/add-music.ts`) and poster images. The tune itself is in `shared/src/music.ts`; to add it to any video, run `npx tsx tools/add-music.ts video.mp4`.
 
 **Themes** live in `server/src/themes/en.json`. They are short, open prompts of 1–2 words ("Dragon", "Dream House", "Kindness") so every player can imagine them their own way. Add, remove or edit lines in the `themes` list and redeploy. A unit test checks there are at least 50, each 1–2 words, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
 

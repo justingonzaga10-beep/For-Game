@@ -237,6 +237,7 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 }
 .icon-btn svg { width: 20px; height: 20px; }
 .icon-btn[aria-pressed="true"]:not(.crt-btn) { color: var(--red); border-color: rgba(255, 77, 94, 0.6); }
+.music-btn:not(.on) { color: var(--dim); }
 .crt-btn { font-family: var(--f-pixel); font-size: 8px; width: 46px; color: var(--dim); }
 .crt-btn.on { color: var(--lime); border-color: rgba(var(--lime-rgb), 0.6); text-shadow: 0 0 6px var(--lime); }
 .volume { width: 96px; accent-color: var(--pink); }

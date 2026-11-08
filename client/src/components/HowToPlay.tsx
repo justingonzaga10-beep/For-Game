@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { GameModeId } from "@inkwave/shared";
+import { music } from "../lib/music";
 
 const VIDEOS: Record<GameModeId, { label: string; src: string; poster: string; blurb: string }> = {
   guess: {
@@ -36,7 +37,25 @@ export function HowToPlayButton({ mode = "guess", className = "btn ghost small",
 function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => void }) {
   const [tab, setTab] = useState<GameModeId>(initial);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const v = VIDEOS[tab];
+
+  // The videos have their own music, so pause the game's while one is open.
+  useEffect(() => {
+    music.setPaused(true);
+    return () => music.setPaused(false);
+  }, []);
+
+  // Start with sound; if the browser blocks that, start muted (the controls can unmute).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = false;
+    el.play().catch(() => {
+      el.muted = true;
+      void el.play().catch(() => {});
+    });
+  }, [tab]);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -62,8 +81,8 @@ function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => v
           ))}
         </div>
         <p className="howto-blurb">{v.blurb}</p>
-        {/* key: switching tabs loads the other video from the start. Videos have no sound. */}
-        <video key={tab} className="howto-video" src={v.src} poster={v.poster} controls playsInline muted autoPlay preload="metadata">
+        {/* key: switching tabs loads the other video from the start. */}
+        <video ref={videoRef} key={tab} className="howto-video" src={v.src} poster={v.poster} controls playsInline preload="auto">
           Your browser can't play this video.
         </video>
       </div>
