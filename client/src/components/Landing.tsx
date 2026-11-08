@@ -15,6 +15,7 @@ import { useGame, type Removal } from "../lib/game";
 import { load, save } from "../lib/storage";
 import { Avatar } from "./Avatar";
 import { BrandShield } from "./BrandShield";
+import { HowToPlayButton } from "./HowToPlay";
 import { Logo } from "./Logo";
 
 const PARTS: { key: Exclude<keyof AvatarData, "color">; label: string }[] = [
@@ -175,6 +176,10 @@ export function Landing({ joinCode, onEntered }: { joinCode?: string; onEntered:
           </div>
         </div>
       </form>
+
+      <div className="howto-cta">
+        <HowToPlayButton className="btn secondary" label="Watch how to play" />
+      </div>
 
       <section className="how" aria-label="How to play">
         <div>

@@ -592,6 +592,22 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 :root[data-theme="light"].crt body::after { background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 3px); }
 :root[data-theme="light"].crt body::before { background: radial-gradient(ellipse at center, transparent 65%, rgba(0, 0, 0, 0.08) 100%); }
 
+/* How to play videos */
+.howto-cta { display: flex; justify-content: center; }
+.play-icon { width: 18px; height: 18px; flex: none; }
+.howto {
+  position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; background: rgba(10, 10, 12, 0.7);
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  animation: fade-in 0.15s ease-out;
+}
+.howto-body { width: min(920px, 100%, calc((100dvh - 200px) * 16 / 9 + 32px)); max-height: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: var(--panel-solid); }
+.howto-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.howto-head h2 { font-family: var(--f-pixel); font-size: 14px; color: var(--gold); }
+.howto-blurb { margin: 0; color: var(--muted); }
+.howto-video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 12px; background: #1c1c1f; }
+:root[data-theme="light"] .howto { background: rgba(60, 60, 70, 0.55); }
+:root[data-theme="light"] .howto-head h2 { color: #a77d00; }
+
 /* ------------------------------------------------------------------ */
 /* Responsive                                                          */
 /* ------------------------------------------------------------------ */

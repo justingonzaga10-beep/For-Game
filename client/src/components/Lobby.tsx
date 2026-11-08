@@ -4,6 +4,7 @@ import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
 import { Chat } from "./Chat";
+import { HowToPlayButton } from "./HowToPlay";
 import { PlayerActions } from "./PlayerActions";
 
 const DRAW_TIMES = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 180, 210, 240];
@@ -111,6 +112,8 @@ export function Lobby() {
         <div className="panel-head">
           <h2 id="settings-h">{view.isPublic ? "Public room" : "Room settings"}</h2>
           {!isHost && !view.isPublic && <span className="muted">Only the host can change these</span>}
+          {/* Outside the settings fieldset, so guests can use it too. */}
+          <HowToPlayButton key={s.mode} mode={isDrawOff ? "drawoff" : "guess"} />
         </div>
 
         <fieldset className="settings-grid" disabled={!isHost}>
