@@ -14,13 +14,13 @@ export function useGameSounds() {
     const prev = prevPhase.current;
     prevPhase.current = view?.phase;
     if (!view || prev === view.phase) return;
-    if (view.phase === "drawing" || view.phase === "drawoff_drawing") sfx.turnStart();
+    if (view.phase === "drawing" || view.phase === "drawoff_drawing" || view.phase === "perim_solve") sfx.turnStart();
     if (view.phase === "drawoff_results") sfx.otherCorrect();
     if (view.phase === "podium") sfx.gameEnd();
   }, [view?.phase, view]);
 
   useEffect(() => {
-    const drawingPhase = view?.phase === "drawing" || view?.phase === "drawoff_drawing";
+    const drawingPhase = view?.phase === "drawing" || view?.phase === "drawoff_drawing" || view?.phase === "perim_solve";
     if (!drawingPhase || left === null || left > 10 || left === 0) {
       lastTick.current = null;
       return;

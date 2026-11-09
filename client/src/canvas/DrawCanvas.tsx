@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { CANVAS_H, CANVAS_W, PAPER, type DrawOp } from "@inkwave/shared";
+import { useEffect, useRef, type ReactNode } from "react";
+import { CANVAS_H, CANVAS_W, PAPER, type DrawAction, type DrawOp } from "@inkwave/shared";
 import type { CanvasLogEvent, CanvasSource } from "./canvasLog";
 import { DrawingEngine } from "./engine";
 
@@ -21,11 +21,16 @@ interface Props {
   engineRef: React.MutableRefObject<DrawingEngine | null>;
   /** Called with ops the local player makes, already applied locally. */
   emitRef: React.MutableRefObject<((ops: DrawOp[]) => void) | null>;
+  /** A fixed picture under the drawing that undo and clear keep (Perimeter mode's shape). */
+  base?: DrawAction[];
+  /** Shown on top of the paper, not drawn into it (Perimeter mode's measurements). */
+  overlay?: ReactNode;
 }
+const NO_BASE: DrawAction[] = [];
 
 const FLUSH_MS = 30;
 
-export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef }: Props) {
+export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef, base = NO_BASE, overlay }: Props) {
   const canvasLog = source.log;
   const sendRef = useRef(source.send);
   sendRef.current = source.send;
@@ -55,6 +60,11 @@ export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef }: Props
       engineRef.current = null;
     };
   }, [canvasLog, engineRef]);
+
+  // The base layer; runs after the engine exists, and again whenever the shape changes.
+  useEffect(() => {
+    engineRef.current?.setBase(base);
+  }, [base, engineRef]);
 
   // Outgoing ops: applied locally at once, sent in ~30 ms batches.
   useEffect(() => {
@@ -180,6 +190,7 @@ export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef }: Props
   return (
     <div className={`paper ${canDraw ? `can-draw tool-${tools.tool}` : ""}`}>
       <canvas ref={canvasRef} aria-label={canDraw ? "Drawing canvas: draw here" : "The drawing"} />
+      {overlay}
       <div ref={cursorRef} className="brush-cursor" aria-hidden="true" />
     </div>
   );

@@ -6,7 +6,7 @@ import guessingJpg from "../assets/tutorials/guessing.jpg";
 import guessingMp4 from "../assets/tutorials/guessing.mp4";
 import { music } from "../lib/music";
 
-const VIDEOS: Record<GameModeId, { label: string; src: string; poster: string; blurb: string }> = {
+const VIDEOS: Partial<Record<GameModeId, { label: string; src: string; poster: string; blurb: string }>> = {
   guess: {
     label: "Guessing",
     // Imported, so the file name changes with the content and browsers never play a stale copy.
@@ -40,12 +40,12 @@ export function HowToPlayButton({ mode = "guess", className = "btn ghost small",
 }
 
 function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => void }) {
-  const [tab, setTab] = useState<GameModeId>(initial);
+  const [tab, setTab] = useState<GameModeId>(VIDEOS[initial] ? initial : "guess");
   const closeRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   /** True when the browser only let the video start muted. */
   const [silent, setSilent] = useState(false);
-  const v = VIDEOS[tab];
+  const v = VIDEOS[tab]!;
 
   // The videos have their own music, so pause the game's while one is open.
   useEffect(() => {
@@ -94,7 +94,7 @@ function HowToPlay({ initial, onClose }: { initial: GameModeId; onClose: () => v
         <div className="segmented" role="tablist" aria-label="Game mode">
           {(Object.keys(VIDEOS) as GameModeId[]).map((id) => (
             <button key={id} type="button" role="tab" aria-selected={tab === id} className={tab === id ? "on" : ""} onClick={() => setTab(id)}>
-              {VIDEOS[id].label}
+              {VIDEOS[id]!.label}
             </button>
           ))}
         </div>

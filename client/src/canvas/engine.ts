@@ -17,6 +17,7 @@ export class DrawingEngine {
   private ctx: CanvasRenderingContext2D;
   private actions: DrawAction[] = [];
   private live = new Map<number, LiveStroke>();
+  private base: DrawAction[] = [];
   /** Bumped on every change, so React can subscribe cheaply. */
   version = 0;
   onChange: (() => void) | null = null;
@@ -75,7 +76,7 @@ export class DrawingEngine {
       case "clear":
         this.finishAll();
         this.actions.push({ t: "clear" });
-        this.paper();
+        this.ground();
         break;
     }
     this.changed();
@@ -108,10 +109,29 @@ export class DrawingEngine {
     c.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   }
 
-  private redraw() {
+  /**
+   * A fixed picture under the drawing (Perimeter mode's shape outline). It is
+   * part of the bitmap, so fills stop at its lines, but undo and clear never
+   * remove it.
+   */
+  setBase(actions: DrawAction[]): void {
+    this.base = actions;
+    this.redraw();
+  }
+
+  /** Blank paper plus the base layer. */
+  private ground() {
     this.paper();
+    for (const a of this.base) {
+      if (a.t === "fill") this.fill(a.x, a.y, a.color);
+      else if (a.t === "stroke") this.renderStroke(a);
+    }
+  }
+
+  private redraw() {
+    this.ground();
     for (const a of this.actions) {
-      if (a.t === "clear") this.paper();
+      if (a.t === "clear") this.ground();
       else if (a.t === "fill") this.fill(a.x, a.y, a.color);
       else this.renderStroke(a);
     }

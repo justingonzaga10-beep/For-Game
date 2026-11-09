@@ -1,9 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { ChatMessage, DrawAction, DrawOffEntry, DrawOp, JoinResult, Profile, RoomSettings, RoomView } from "@inkwave/shared";
+import type { ChatMessage, DrawAction, DrawOffEntry, DrawOp, JoinResult, PerimeterShape, Profile, RoomSettings, RoomView } from "@inkwave/shared";
 import { CanvasLog } from "../canvas/canvasLog";
 import { socket } from "./socket";
 
 export type FxListener = (fx: { playerId: string; points: number }) => void;
+/** Perimeter: the server's private verdict on your last answer. `n` counts answers so repeats re-render. */
+export interface PerimFeedback {
+  result: "correct" | "close" | "wrong";
+  value: number;
+  n: number;
+}
 export type Removal = "kicked" | "banned" | "votekicked";
 
 interface GameApi {
@@ -30,6 +36,10 @@ interface GameApi {
   /** Draw-Off: ops for your private canvas (only the server sees them). */
   sendPrivateDraw: (ops: DrawOp[]) => void;
   vote: (entryId: string, stars: number) => void;
+  /** Perimeter: feedback on your last answer this turn. */
+  perimFeedback: PerimFeedback | null;
+  submitShape: (shape: PerimeterShape) => void;
+  answerPerimeter: (value: number) => void;
   drawOffContinue: () => void;
   sendChat: (text: string) => void;
   kick: (id: string) => void;
@@ -52,6 +62,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const canvasLog = useMemo(() => new CanvasLog(), []);
   const drawOffLog = useMemo(() => new CanvasLog(), []);
   const [drawOffEntries, setDrawOffEntries] = useState<Record<string, DrawAction[]>>({});
+  const [perimFeedback, setPerimFeedback] = useState<PerimFeedback | null>(null);
+  const lastView = useRef<RoomView | null>(null);
   const fx = useRef(new Set<FxListener>());
   const roomCode = useRef<string | null>(null);
   /** Where to rejoin after a dropped connection (wifi blip, server restart). */
@@ -63,6 +75,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const sample = v.serverNow - Date.now();
       offset.current = offset.current === 0 ? sample : offset.current * 0.7 + sample * 0.3;
       roomCode.current = v.code;
+      // A new turn or phase clears the last answer's feedback.
+      const old = lastView.current;
+      if (old && (old.phase !== v.phase || old.drawerId !== v.drawerId) && v.phase !== "perim_solve") setPerimFeedback(null);
+      lastView.current = v;
       setView(v);
     };
     const onChat = (m: ChatMessage) => setChat((c) => (c.length >= MAX_CHAT ? [...c.slice(-MAX_CHAT + 1), m] : [...c, m]));
@@ -70,6 +86,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const onReplay = (a: DrawAction[]) => canvasLog.replay(a);
     const onDrawOffCanvas = (a: DrawAction[]) => drawOffLog.replay(a);
     const onDrawOffEntries = (list: DrawOffEntry[]) => setDrawOffEntries(Object.fromEntries(list.map((e) => [e.entryId, e.actions])));
+    const onPerimFeedback = (f: { result: PerimFeedback["result"]; value: number }) => setPerimFeedback((old) => ({ ...f, n: (old?.n ?? 0) + 1 }));
     const onFx = (f: { playerId: string; points: number }) => fx.current.forEach((l) => l(f));
     const onRemoved = ({ reason }: { reason: Removal }) => {
       roomCode.current = null;
@@ -107,6 +124,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on("notice", onNotice);
     socket.on("drawoff:canvas", onDrawOffCanvas);
     socket.on("drawoff:entries", onDrawOffEntries);
+    socket.on("perim:feedback", onPerimFeedback);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     return () => {
@@ -119,6 +137,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       socket.off("notice", onNotice);
       socket.off("drawoff:canvas", onDrawOffCanvas);
       socket.off("drawoff:entries", onDrawOffEntries);
+      socket.off("perim:feedback", onPerimFeedback);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       clearTimeout(noticeTimer);
@@ -191,6 +210,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     },
     vote: (entryId, stars) => socket.emit("drawoff:vote", entryId, stars),
     drawOffContinue: () => socket.emit("drawoff:continue"),
+    perimFeedback,
+    submitShape: (shape) => socket.emit("perim:shape", shape),
+    answerPerimeter: (value) => socket.emit("perim:answer", value),
     sendChat: (text) => socket.emit("chat", text),
     kick: (id) => socket.emit("mod:kick", id),
     ban: (id) => socket.emit("mod:ban", id),

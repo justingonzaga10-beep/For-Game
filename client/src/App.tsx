@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { normalizeRoomCode } from "@inkwave/shared";
 import { DrawOffScreen } from "./components/DrawOff";
 import { GameScreen } from "./components/GameScreen";
+import { PerimeterScreen } from "./components/Perimeter";
 import { Landing } from "./components/Landing";
 import { Lobby } from "./components/Lobby";
 import { ArcadeControls, TopBar } from "./components/TopBar";
@@ -70,6 +71,7 @@ export function App() {
 
   // Draw-Off phases, plus the final podium of a Draw-Off game.
   const isDrawOff = !!view && (view.phase.startsWith("drawoff_") || (view.phase === "podium" && view.settings.mode === "drawoff" && !view.isPublic));
+  const isPerimeter = !!view && (view.phase.startsWith("perim_") || (view.phase === "podium" && view.settings.mode === "perimeter" && !view.isPublic));
 
   if (!view) {
     return (
@@ -102,7 +104,7 @@ export function App() {
           navigate("/");
         }}
       />
-      {view.phase === "lobby" ? <Lobby /> : isDrawOff ? <DrawOffScreen /> : <GameScreen />}
+      {view.phase === "lobby" ? <Lobby /> : isDrawOff ? <DrawOffScreen /> : isPerimeter ? <PerimeterScreen /> : <GameScreen />}
     </div>
   );
 }

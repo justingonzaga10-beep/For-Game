@@ -188,7 +188,9 @@ export function shapeGeometry(s: PerimeterShape): ShapeEdge[] {
     const a = toScreen(p);
     const b = toScreen(q);
     const mid: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-    return { from: a, to: b, length: lengths[i], label: [mid[0] + nx * 40, mid[1] + ny * 40], labelled: labelled[i], hidden: s.hidden === i };
+    // Labels are wider than tall, so sit further out beside upright sides.
+    const gap = 36 + 24 * Math.abs(nx);
+    return { from: a, to: b, length: lengths[i], label: [mid[0] + nx * gap, mid[1] + ny * gap], labelled: labelled[i], hidden: s.hidden === i };
   });
 }
 

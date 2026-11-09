@@ -101,6 +101,9 @@ export function TimerRing({ urgent }: { urgent: boolean }) {
     drawoff_voting: TIMING.drawOffVoteSeconds,
     drawoff_results: TIMING.drawOffResultsSeconds,
     drawoff_gallery: TIMING.drawOffGallerySeconds,
+    perim_build: TIMING.perimeterBuildSeconds,
+    perim_solve: view.settings.perimeterTime,
+    perim_reveal: TIMING.perimeterRevealSeconds,
   };
   const total = totals[view.phase] ?? TIMING.publicAutoStartSeconds;
   const frac = left === null ? 0 : Math.min(1, left / total);

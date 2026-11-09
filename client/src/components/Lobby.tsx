@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DRAWOFF_MIN_PLAYERS, LANGUAGES, SETTING_BOUNDS, type GameModeId, type RoomSettings, type WordMode } from "@inkwave/shared";
+import { DRAWOFF_MIN_PLAYERS, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_KINDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
@@ -12,7 +12,9 @@ const DRAWOFF_TIMES = [30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
 const GAME_MODE_CARDS: { id: GameModeId; title: string; blurb: string }[] = [
   { id: "guess", title: "Guessing", blurb: "One player draws, everyone else races to guess the word." },
   { id: "drawoff", title: "Draw-Off", blurb: "Everyone draws the same theme, then rates each other's art." },
+  { id: "perimeter", title: "Perimeter", blurb: "Make a shape with measurements. Everyone finds its perimeter." },
 ];
+const PERIM_TIMES = [20, 30, 45, 60, 75, 90, 120, 150, 180];
 /** Keeps the current value selectable even if it isn't one of the presets. */
 const withValue = (list: number[], v: number) => (list.includes(v) ? list : [...list, v].sort((a, b) => a - b));
 const range = (lo: number, hi: number) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
@@ -58,6 +60,13 @@ export function Lobby() {
   };
 
   const isDrawOff = s.mode === "drawoff" && !view.isPublic;
+  const isPerimeter = s.mode === "perimeter" && !view.isPublic;
+  const isGuess = !isDrawOff && !isPerimeter;
+  const toggleShape = (k: ShapeKind) => {
+    const on = s.perimeterShapes.includes(k);
+    if (on && s.perimeterShapes.length === 1) return; // keep at least one
+    set({ perimeterShapes: on ? s.perimeterShapes.filter((x) => x !== k) : [...s.perimeterShapes, k] });
+  };
   const minPlayers = isDrawOff ? DRAWOFF_MIN_PLAYERS : 2;
   const enough = view.players.length >= minPlayers;
   const customCount = s.customWords.split(",").filter((w) => w.trim()).length;
@@ -137,9 +146,10 @@ export function Lobby() {
                 ))}
               </div>
               {isDrawOff && <small className="muted">Needs at least {DRAWOFF_MIN_PLAYERS} players. Themes are in English.</small>}
+              {isPerimeter && <small className="muted">Each player makes a shape with measurements; the others work out its perimeter.</small>}
             </div>
           )}
-          {!isDrawOff && (
+          {isGuess && (
           <Field label="Language">
             <select id="set-language" value={s.language} onChange={(e) => set({ language: e.target.value as RoomSettings["language"] })}>
               {LANGUAGES.map((l) => (
@@ -179,7 +189,55 @@ export function Lobby() {
               </select>
             </Field>
           )}
-          {!isDrawOff && (
+          {isPerimeter && (
+            <>
+              <Field label="Answer time">
+                <select id="set-perim-time" value={s.perimeterTime} onChange={(e) => set({ perimeterTime: +e.target.value })}>
+                  {withValue(PERIM_TIMES, s.perimeterTime).map((n) => (
+                    <option key={n} value={n}>
+                      {n} s
+                    </option>
+                  ))}
+                </select>
+              </Field>
+              <div className="field">
+                <span>Units</span>
+                <div className="segmented" role="radiogroup" aria-label="Units">
+                  {(["cm", "m"] as const).map((u) => (
+                    <button key={u} id={`unit-${u}`} type="button" role="radio" aria-checked={s.perimeterUnit === u} className={s.perimeterUnit === u ? "on" : ""} onClick={() => set({ perimeterUnit: u })}>
+                      {u}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="field wide">
+                <span>Number size</span>
+                <div className="segmented" role="radiogroup" aria-label="Number size">
+                  {PERIMETER_MAXES.map((m) => (
+                    <button key={m} id={`max-${m}`} type="button" role="radio" aria-checked={s.perimeterMax === m} className={s.perimeterMax === m ? "on" : ""} onClick={() => set({ perimeterMax: m })}>
+                      1 to {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="field wide">
+                <span>Shapes</span>
+                <div className="shape-chips">
+                  {SHAPE_KINDS.map((k) => (
+                    <label key={k} className={`chip ${s.perimeterShapes.includes(k) ? "on" : ""}`}>
+                      <input id={`shape-${k}`} type="checkbox" checked={s.perimeterShapes.includes(k)} onChange={() => toggleShape(k)} />
+                      {SHAPE_LABELS[k]}
+                    </label>
+                  ))}
+                </div>
+                <label className="check">
+                  <input id="set-perim-challenge" type="checkbox" checked={s.perimeterChallenge} onChange={(e) => set({ perimeterChallenge: e.target.checked })} />
+                  Challenge: the drawer may hide one measurement on a rectangle or L-shape
+                </label>
+              </div>
+            </>
+          )}
+          {isGuess && (
           <>
           <Field label="Draw time">
             <select id="set-time" value={s.drawTime} onChange={(e) => set({ drawTime: +e.target.value })}>
@@ -269,7 +327,7 @@ export function Lobby() {
             </p>
           ) : isHost ? (
             <button type="button" className="btn primary big" disabled={!enough} onClick={g.start}>
-              {enough ? `Start ${isDrawOff ? "Draw-Off" : "game"}` : `Waiting for players (${view.players.length}/${minPlayers})`}
+              {enough ? `Start ${isDrawOff ? "Draw-Off" : isPerimeter ? "Perimeter" : "game"}` : `Waiting for players (${view.players.length}/${minPlayers})`}
             </button>
           ) : (
             <p className="status">Waiting for the host to start the game…</p>
