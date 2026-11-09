@@ -641,7 +641,10 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .builder-problem { margin: 0; padding: 20px; max-width: 80%; text-align: center; color: #c0236f; font-weight: 700; font-size: 18px; }
 .builder-controls, .numpad, .reveal-panel { padding: 10px 12px; border: 2px solid rgba(var(--gold-rgb), 0.45); border-radius: 14px; }
 .builder-controls { display: flex; flex-direction: column; gap: 10px; }
-.shape-kinds { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.shape-kinds { display: flex; flex-wrap: wrap; gap: 8px 18px; justify-content: center; }
+.kind-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.kind-group small, .chip-group { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; min-width: 74px; }
+.shortcut.note { color: var(--yellow); font-size: 14px; }
 .tbtn.kind { width: auto; padding: 0 14px; font-weight: 700; font-size: 14px; }
 .steppers { display: flex; flex-wrap: wrap; gap: 10px 18px; justify-content: center; }
 .stepper { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }

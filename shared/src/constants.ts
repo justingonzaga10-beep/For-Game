@@ -1,3 +1,5 @@
+import type { ShapeKind } from "./perimeter";
+
 /** Logical canvas size. Every client draws in these coordinates and scales the view. */
 export const CANVAS_W = 800;
 export const CANVAS_H = 600;
@@ -73,7 +75,7 @@ export interface RoomSettings {
   /** Perimeter: biggest side length (10, 20 or 50). */
   perimeterMax: number;
   /** Perimeter: shapes the drawer may choose. */
-  perimeterShapes: ("rect" | "square" | "triangle" | "lshape")[];
+  perimeterShapes: ShapeKind[];
   /** Perimeter: the drawer may hide one measurement on a rectangle or L-shape. */
   perimeterChallenge: boolean;
 }
@@ -103,7 +105,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   perimeterTime: 60,
   perimeterUnit: "cm",
   perimeterMax: 20,
-  perimeterShapes: ["rect", "square", "triangle", "lshape"],
+  perimeterShapes: ["rect", "square", "triangle", "lshape", "tshape", "ushape", "house"],
   perimeterChallenge: false,
 };
 

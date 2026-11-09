@@ -93,8 +93,8 @@ export interface PerimeterView {
   unit: "cm" | "m";
   /** The correct perimeter: for the drawer, players who solved it, and at the reveal. */
   answer: number | null;
-  /** Worked answer at the reveal: "8 + 3 + 8 + 3 = 22 cm" and a shortcut if there is one. */
-  equation: { sum: string; shortcut: string | null } | null;
+  /** Worked answer at the reveal: "8 + 3 + 8 + 3 = 22 cm", a shortcut if there is one, and a note for composites. */
+  equation: { sum: string; shortcut: string | null; note: string | null } | null;
 }
 
 /** What one player sees of a Draw-Off round. */

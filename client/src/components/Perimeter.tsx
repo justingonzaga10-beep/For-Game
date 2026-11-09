@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   HIDEABLE,
+  BASIC_SHAPES,
+  COMPOSITE_SHAPES,
   SHAPE_KINDS,
   SHAPE_LABELS,
   SHAPE_PARAMS,
@@ -8,6 +10,7 @@ import {
   perimeterOf,
   randomShape,
   shapeGeometry,
+  shapeInsideLines,
   shapeOutline,
   shapeProblem,
   type PerimeterShape,
@@ -181,13 +184,12 @@ export function ShapeLabels({ shape, unit, reveal = false, outline = false, onPi
   return (
     <svg className={`shape-labels ${onPick ? "editable" : ""}`} viewBox="0 0 800 600" role="img" aria-label={describe(shape, unit)}>
       {outline && (
-        <polygon
-          points={edges.map((e) => e.from.join(",")).join(" ")}
-          fill="none"
-          stroke="#2b2b30"
-          strokeWidth="5"
-          strokeLinejoin="round"
-        />
+        <>
+          <polygon points={edges.map((e) => e.from.join(",")).join(" ")} fill="none" stroke="#2b2b30" strokeWidth="5" strokeLinejoin="round" />
+          {shapeInsideLines(shape).map(([p, q], i) => (
+            <line key={`in-${i}`} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke="#9a96a0" strokeWidth="3" strokeDasharray="14 10" />
+          ))}
+        </>
       )}
       {reveal &&
         edges.map((e, i) => (
@@ -238,13 +240,15 @@ function ShapeBuilder() {
   const setKind = (k: ShapeKind) => setShape(randomShape([k], max));
   const setSide = (i: number, raw: number) => {
     const sides = [...shape.sides];
-    const lo = shape.kind === "lshape" && i < 2 ? 2 : 1;
+    const lo = (shape.kind === "lshape" && i < 2) || (shape.kind === "ushape" && i === 2) ? 2 : 1;
     sides[i] = Math.max(lo, Math.min(max, Math.round(raw) || lo));
     if (shape.kind === "lshape") {
       // Keep the cut smaller than the shape.
       sides[2] = Math.min(sides[2], sides[0] - 1);
       sides[3] = Math.min(sides[3], sides[1] - 1);
     }
+    if (shape.kind === "ushape") sides[3] = Math.min(sides[3], sides[2] - 1); // the base stays below the top
+    // Other rules (a house roof that can't meet, a T-shape too wide) are explained, not silently fixed.
     setShape({ ...shape, sides });
   };
   const pick = (edge: number) => setShape({ ...shape, hidden: shape.hidden === edge ? null : edge });
@@ -263,11 +267,23 @@ function ShapeBuilder() {
       </div>
       <div className="builder-controls panel">
         <div className="shape-kinds" role="radiogroup" aria-label="Shape">
-          {kinds.map((k) => (
-            <button key={k} id={`kind-${k}`} type="button" role="radio" aria-checked={shape.kind === k} className={`tbtn kind ${shape.kind === k ? "on" : ""}`} onClick={() => setKind(k)}>
-              {SHAPE_LABELS[k]}
-            </button>
-          ))}
+          {[
+            { name: "Basic", list: BASIC_SHAPES },
+            { name: "Composite", list: COMPOSITE_SHAPES },
+          ].map((group) => {
+            const shown = group.list.filter((k) => kinds.includes(k));
+            if (!shown.length) return null;
+            return (
+              <div className="kind-group" key={group.name}>
+                <small>{group.name}</small>
+                {shown.map((k) => (
+                  <button key={k} id={`kind-${k}`} type="button" role="radio" aria-checked={shape.kind === k} className={`tbtn kind ${shape.kind === k ? "on" : ""}`} onClick={() => setKind(k)}>
+                    {SHAPE_LABELS[k]}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
         </div>
         <div className="steppers">
           {SHAPE_PARAMS[shape.kind].map((label, i) => (
@@ -411,6 +427,11 @@ function RevealPanel() {
       {per.equation?.shortcut && (
         <p className="shortcut" style={{ animationDelay: `${(sides.length + 1) * step}s` }}>
           Shortcut: {per.equation.shortcut}
+        </p>
+      )}
+      {per.equation?.note && (
+        <p className="shortcut note" style={{ animationDelay: `${(sides.length + 1) * step}s` }}>
+          {per.equation.note}
         </p>
       )}
       <ul className="gains mini">

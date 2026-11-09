@@ -114,7 +114,7 @@ const inkAt = (page, fx, fy) => page.evaluate(([fx, fy]) => {
     }
     ok(!!drawer, `turn ${turn}: ${drawer?.name} makes a shape`);
     order.push(drawer.name);
-    const kinds = ["triangle", "lshape", "square", "rect", "triangle"];
+    const kinds = ["house", "tshape", "ushape", "lshape", "triangle"];
     const kind = kinds[(turn - 2) % kinds.length];
     if (await drawer.locator(`#kind-${kind}`).count()) await drawer.click(`#kind-${kind}`);
     if (turn === 3) {
@@ -139,6 +139,9 @@ const inkAt = (page, fx, fy) => page.evaluate(([fx, fy]) => {
       }
     }
     await ana.waitForSelector(".reveal-panel");
+    if (kind === "house" && turn !== 3) {
+      ok((await ana.textContent(".reveal-panel")).includes("dashed line is inside"), "a composite shape's reveal explains the inside line");
+    }
   }
   ok(JSON.stringify(order) === JSON.stringify(["Ana", "Ben", "Cai", "Ana", "Ben", "Cai"]), `everyone made a shape once per round: ${order.join(", ")}`);
 

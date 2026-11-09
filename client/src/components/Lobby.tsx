@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DRAWOFF_MIN_PLAYERS, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_KINDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
+import { BASIC_SHAPES, COMPOSITE_SHAPES, DRAWOFF_MIN_PLAYERS, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
@@ -222,17 +222,23 @@ export function Lobby() {
               </div>
               <div className="field wide">
                 <span>Shapes</span>
-                <div className="shape-chips">
-                  {SHAPE_KINDS.map((k) => (
-                    <label key={k} className={`chip ${s.perimeterShapes.includes(k) ? "on" : ""}`}>
-                      <input id={`shape-${k}`} type="checkbox" checked={s.perimeterShapes.includes(k)} onChange={() => toggleShape(k)} />
-                      {SHAPE_LABELS[k]}
-                    </label>
-                  ))}
-                </div>
+                {[
+                  { name: "Basic", list: BASIC_SHAPES },
+                  { name: "Composite", list: COMPOSITE_SHAPES },
+                ].map((group) => (
+                  <div className="shape-chips" key={group.name}>
+                    <small className="chip-group">{group.name}</small>
+                    {group.list.map((k) => (
+                      <label key={k} className={`chip ${s.perimeterShapes.includes(k) ? "on" : ""}`}>
+                        <input id={`shape-${k}`} type="checkbox" checked={s.perimeterShapes.includes(k)} onChange={() => toggleShape(k)} />
+                        {SHAPE_LABELS[k]}
+                      </label>
+                    ))}
+                  </div>
+                ))}
                 <label className="check">
                   <input id="set-perim-challenge" type="checkbox" checked={s.perimeterChallenge} onChange={(e) => set({ perimeterChallenge: e.target.checked })} />
-                  Challenge: the drawer may hide one measurement on a rectangle or L-shape
+                  Challenge: the drawer may hide one measurement on a rectangle, L, T or U-shape
                 </label>
               </div>
             </>

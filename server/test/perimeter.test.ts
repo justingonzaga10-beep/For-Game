@@ -11,7 +11,9 @@ import {
   perimeterEquation,
   perimeterOf,
   randomShape,
+  SHAPE_KINDS,
   shapeGeometry,
+  shapeInsideLines,
   shapeOutline,
   shapeProblem,
   type ChatMessage,
@@ -36,9 +38,49 @@ describe("shapes", () => {
   });
 
   it("writes out the working", () => {
-    expect(perimeterEquation(rect(8, 3), "cm")).toEqual({ sum: "8 + 3 + 8 + 3 = 22 cm", shortcut: "2 × (8 + 3) = 22 cm" });
-    expect(perimeterEquation({ kind: "square", sides: [5], hidden: null }, "m")).toEqual({ sum: "5 + 5 + 5 + 5 = 20 m", shortcut: "4 × 5 = 20 m" });
+    expect(perimeterEquation(rect(8, 3), "cm")).toEqual({ sum: "8 + 3 + 8 + 3 = 22 cm", shortcut: "2 × (8 + 3) = 22 cm", note: null });
+    expect(perimeterEquation({ kind: "square", sides: [5], hidden: null }, "m")).toEqual({ sum: "5 + 5 + 5 + 5 = 20 m", shortcut: "4 × 5 = 20 m", note: null });
     expect(perimeterEquation({ kind: "triangle", sides: [6, 5, 4], hidden: null }, "cm").shortcut).toBeNull();
+  });
+
+  it("adds up composite shapes, leaving out the inside lines", () => {
+    // T: top 2×3+4 = 10 wide, bar 2 high, stem 4 wide and 5 high.
+    const T: PerimeterShape = { kind: "tshape", sides: [3, 4, 2, 5], hidden: null };
+    expect(edgeLengths(T)).toEqual([4, 5, 3, 2, 10, 2, 3, 5]);
+    expect(perimeterOf(T)).toBe(34); // = 2 × (10 + 7), the rectangle around it
+    // U: arms 2 wide, gap 3, 6 high, base 2 → 7 wide, gap 4 deep.
+    const U: PerimeterShape = { kind: "ushape", sides: [2, 3, 6, 2], hidden: null };
+    expect(edgeLengths(U)).toEqual([7, 6, 2, 4, 3, 4, 2, 6]);
+    expect(perimeterOf(U)).toBe(34);
+    // House: 6 wide, walls 4, roof sides 5. The line under the roof doesn't count.
+    const H: PerimeterShape = { kind: "house", sides: [6, 4, 5], hidden: null };
+    expect(edgeLengths(H)).toEqual([6, 4, 5, 5, 4]);
+    expect(perimeterOf(H)).toBe(24);
+  });
+
+  it("explains composites at the reveal", () => {
+    const T: PerimeterShape = { kind: "tshape", sides: [3, 4, 2, 5], hidden: null };
+    expect(perimeterEquation(T, "cm").shortcut).toBe("2 × (10 + 7) = 34 cm, the same as the rectangle around it");
+    expect(perimeterEquation(T, "cm").note).toMatch(/dashed line is inside/);
+    expect(perimeterEquation({ kind: "lshape", sides: [8, 6, 3, 2], hidden: null }, "cm").shortcut).toMatch(/^2 × \(8 \+ 6\) = 28 cm/);
+    expect(perimeterEquation({ kind: "house", sides: [6, 4, 5], hidden: null }, "cm")).toMatchObject({ shortcut: null, note: expect.stringMatching(/dashed/) });
+    expect(perimeterEquation({ kind: "ushape", sides: [2, 3, 6, 2], hidden: null }, "cm")).toMatchObject({ shortcut: null, note: null });
+  });
+
+  it("only accepts composite shapes that fit together", () => {
+    expect(shapeProblem("house", [10, 4, 5], 20)).toMatch(/too short to meet/); // 5 + 5 can't span 10
+    expect(shapeProblem("house", [10, 4, 6], 20)).toBeNull();
+    expect(shapeProblem("tshape", [5, 6, 2, 3], 10)).toMatch(/top would be 16/);
+    expect(shapeProblem("ushape", [2, 3, 4, 4], 20)).toMatch(/base must be shorter/);
+    expect(shapeProblem("ushape", [5, 5, 4, 1], 10)).toMatch(/15 wide/);
+  });
+
+  it("draws dashed joining lines inside the house and T-shape", () => {
+    expect(shapeInsideLines({ kind: "house", sides: [6, 4, 5], hidden: null })).toHaveLength(1);
+    expect(shapeInsideLines({ kind: "tshape", sides: [3, 4, 2, 5], hidden: null })).toHaveLength(1);
+    expect(shapeInsideLines(rect(8, 3))).toHaveLength(0);
+    const house = shapeOutline({ kind: "house", sides: [6, 4, 5], hidden: null });
+    expect(house.length).toBeGreaterThan(5 + 2); // edges, roof ticks, dashes
   });
 
   it("only accepts real triangles and L-shapes", () => {
@@ -64,16 +106,16 @@ describe("shapes", () => {
 
   it("always makes valid random shapes", () => {
     for (const max of [10, 20, 50]) {
-      for (let i = 0; i < 400; i++) {
-        const s = randomShape(["rect", "square", "triangle", "lshape"], max);
-        expect(cleanShape(s, { kinds: ["rect", "square", "triangle", "lshape"], max, challenge: false }), JSON.stringify(s)).not.toBeNull();
+      for (let i = 0; i < 700; i++) {
+        const s = randomShape(SHAPE_KINDS, max);
+        expect(cleanShape(s, { kinds: SHAPE_KINDS, max, challenge: false }), JSON.stringify(s)).not.toBeNull();
       }
     }
   });
 
   it("draws every shape to scale inside the canvas, with labels on screen", () => {
     for (let i = 0; i < 200; i++) {
-      const s = randomShape(["rect", "square", "triangle", "lshape"], 50);
+      const s = randomShape(SHAPE_KINDS, i % 2 ? 50 : 10);
       const edges = shapeGeometry(s);
       expect(edges).toHaveLength(edgeLengths(s).length);
       for (const e of edges) {
@@ -227,7 +269,7 @@ describe("Perimeter mode", () => {
     room.answer("p1", 22);
     room.answer("p2", 22);
     expect(room.phase).toBe("perim_reveal");
-    expect(io.p("p1").equation).toEqual({ sum: "8 + 3 + 8 + 3 = 22 cm", shortcut: "2 × (8 + 3) = 22 cm" });
+    expect(io.p("p1").equation).toEqual({ sum: "8 + 3 + 8 + 3 = 22 cm", shortcut: "2 × (8 + 3) = 22 cm", note: null });
     expect(io.views.get("p0")!.reveal!.gains.p0).toBe(250);
     vi.advanceTimersByTime(TIMING.perimeterRevealSeconds * 1000);
     expect(room.phase).toBe("perim_build");
@@ -282,7 +324,7 @@ describe("Perimeter mode", () => {
   it("validates the teacher's settings", () => {
     let s = applySettingsPatch(DEFAULT_SETTINGS, { mode: "perimeter", perimeterMax: 37, perimeterUnit: "km", perimeterShapes: [], perimeterTime: 5 }, 1);
     expect(s).toMatchObject({ mode: "perimeter", perimeterMax: 20, perimeterUnit: "cm", perimeterTime: 20 });
-    expect(s.perimeterShapes).toHaveLength(4); // can't switch every shape off
+    expect(s.perimeterShapes).toHaveLength(7); // can't switch every shape off
     s = applySettingsPatch(s, { perimeterMax: 50, perimeterUnit: "m", perimeterShapes: ["square", "oval"], perimeterChallenge: true }, 1);
     expect(s).toMatchObject({ perimeterMax: 50, perimeterUnit: "m", perimeterShapes: ["square"], perimeterChallenge: true });
   });

@@ -126,11 +126,11 @@ After the last round, the final podium shows, then the room returns to the lobby
 
 A maths mode for private rooms (2 or more players). Each round, every player takes a turn:
 
-1. **Make a shape** (30 s). The drawer picks a rectangle, square, triangle or L-shape and sets each side with + / − buttons (or 🎲 for random numbers). A live preview draws it to scale with the measurements beside each side. The game won't accept impossible shapes, such as a triangle whose two shorter sides don't add up to more than the longest. If time runs out, a random shape is used.
+1. **Make a shape** (30 s). The drawer picks a basic shape (rectangle, square, triangle) or a composite shape (L-shape, T-shape, U-shape, or a house: a rectangle with a triangle roof) and sets each side with + / − buttons (or 🎲 for random numbers). A live preview draws it to scale with the measurements beside each side. The game won't accept impossible shapes, such as a triangle whose two shorter sides don't add up to more than the longest. If time runs out, a random shape is used.
 2. **Solve it.** Everyone else sees the shape and its measurements and types the perimeter on a big number pad (or as a number in chat). Answers are private: a close answer gets *"Close! Did you add all the sides?"*, others get *"Try again!"*. Faster correct answers score more (same scoring as Guessing), and the drawer earns points for the share who solve it. Meanwhile the drawer decorates the shape with the normal tools; the outline can't be erased, and fills stay inside it. The drawer can't type the answer in chat.
-3. **Reveal** (7 s). Each side lights up in turn as the sum builds: **8 + 3 + 8 + 3 = 22 cm**, plus a shortcut for rectangles and squares (**2 × (8 + 3) = 22 cm**, **4 × 5 = 20 cm**).
+3. **Reveal** (7 s). Each side lights up in turn as the sum builds: **8 + 3 + 8 + 3 = 22 cm**, plus a shortcut for rectangles and squares (**2 × (8 + 3) = 22 cm**, **4 × 5 = 20 cm**) and for L and T shapes (the same as the rectangle around them). On the house and T-shape, the line where the parts join is drawn dashed, and the reveal explains that it is inside the shape, so it isn't part of the perimeter.
 
-Teacher settings in the lobby: answer time (20–180 s), units (cm or m), number size (1–10, 1–20 or 1–50), which shapes are allowed, and a **challenge** option that lets the drawer hide one measurement on a rectangle or L-shape (shown as **?**), so students work it out from the other sides.
+Teacher settings in the lobby: answer time (20–180 s), units (cm or m), number size (1–10, 1–20 or 1–50), which shapes are allowed, and a **challenge** option that lets the drawer hide one measurement on a rectangle, L, T or U-shape (shown as **?**), so students work it out from the other sides.
 
 The shape rules, geometry and equations live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
 
