@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGame } from "../lib/game";
 import { Chat } from "./Chat";
+import { ReactionBar, ReactionLayer } from "./Reactions";
 import { Scoreboard } from "./Scoreboard";
 
 function useIsNarrow(px = 900) {
@@ -40,6 +41,8 @@ export function GameLayout({ board }: { board: ReactNode }) {
     return (
       <div className="game narrow">
         {board}
+        <ReactionBar />
+        <ReactionLayer />
         <div className="tabs" role="tablist">
           <button role="tab" type="button" aria-selected={tab === "chat"} className={tab === "chat" ? "on" : ""} onClick={() => setTab("chat")}>
             Chat {unread > 0 && <span className="badge">{unread > 99 ? "99+" : unread}</span>}
@@ -64,8 +67,10 @@ export function GameLayout({ board }: { board: ReactNode }) {
       {board}
       <aside className="panel cabinet side-chat" aria-label="Chat">
         <h2 className="side-h">Chat</h2>
+        <ReactionBar />
         <Chat autoFocus />
       </aside>
+      <ReactionLayer />
     </div>
   );
 }

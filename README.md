@@ -145,6 +145,19 @@ Perimeter and Area share the lobby's shape list; each mode only shows (and only 
 
 The shape rules, geometry and equations for both modes live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
 
+### Emoji reactions
+
+During a game (in every mode), a row of emoji buttons sits above the chat (below the board on phones). Tap one and it floats up over the board with your name on everyone's screen, and pops up by your name in the player list. Each mode has its own set of eight:
+
+| Mode | Reactions |
+| --- | --- |
+| Guessing | 👍 😂 😮 🤔 🔥 👏 🎨 🎉 |
+| Draw-Off | 😍 😂 😮 🌟 🔥 👏 🎨 🎉 |
+| Perimeter | 👍 🤔 🤯 💡 🔥 👏 📏 🎉 |
+| Area | 👍 🤔 🤯 💡 🔥 👏 🟨 🎉 |
+
+The server only relays emojis from the current mode's set (so nothing else can be sent), and each player can send 4 in a row, then about one a second; the buttons dim briefly when you hit the limit. Reactions from a player you muted are hidden. The sets live in `shared/src/reactions.ts`.
+
 ### Moderation and safety
 
 - The host of a private room can kick or ban players. Bans cover the player's browser id and IP for that room.
@@ -179,7 +192,7 @@ BASE=http://localhost:3001 npm run e2e
 ```
 
 - `e2e/lobby.cjs`: create a room, invite link, settings sync, join, kick, start, quick play, profane nickname refused
-- `e2e/full-game.cjs`: three players (one on a phone-sized screen) play a complete 2-round game. Checks timer sync, blanks, close guesses, correct guesses, word secrecy, guessed-only chat, the drawer word block, turn order, podium, and the return to the lobby
+- `e2e/full-game.cjs`: three players (one on a phone-sized screen) play a complete 2-round game. Checks emoji reactions (seen by everyone with the sender's name, spam limited), timer sync, blanks, close guesses, correct guesses, word secrecy, guessed-only chat, the drawer word block, turn order, podium, and the return to the lobby
 - `e2e/resilience.cjs`: public matchmaking, joining mid-game with a pixel-identical canvas, the drawer leaving mid-turn, host handoff, and score restore after a reload
 - `e2e/perimeter.cjs`: three players (one on a phone-sized screen) play a 2-round Perimeter game. Checks the settings, the builder (hiding a measurement, rejecting an impossible triangle), private feedback for wrong, close and right answers, answering in chat, the drawer's fill, the reveal's working, turn order, and the return to the lobby
 - `e2e/area.cjs`: three players (one on a phone-sized screen) play a 2-round Area game. Checks Area's own shapes, the perimeter mix-up hint, close and right answers, answering in chat, shaded parts and step-by-step working at the reveal, a 7.5 answer on the decimal keypad, the house's roof height, and the return to the lobby

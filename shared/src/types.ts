@@ -231,6 +231,8 @@ export interface ClientToServerEvents {
   "perim:shape": (shape: PerimeterShape) => void;
   /** Perimeter: a player's answer. */
   "perim:answer": (value: number) => void;
+  /** Tap an emoji reaction (one from the current mode's set). */
+  react: (emoji: string) => void;
 }
 
 export interface ServerToClientEvents {
@@ -242,6 +244,8 @@ export interface ServerToClientEvents {
   chat: (msg: ChatMessage) => void;
   /** A player guessed: drives the "+points" pop and the chime. */
   "fx:guessed": (info: { playerId: string; points: number }) => void;
+  /** Someone tapped an emoji reaction: it floats up on everyone's screen. */
+  "fx:react": (info: { playerId: string; emoji: string }) => void;
   /** You were removed from the room. */
   "room:removed": (info: { reason: "kicked" | "banned" | "votekicked" }) => void;
   notice: (text: string) => void;

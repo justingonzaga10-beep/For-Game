@@ -23,6 +23,7 @@ export interface Player {
   guessed: boolean;
   chatLimit: TokenBucket;
   drawLimit: TokenBucket;
+  reactLimit: TokenBucket;
 }
 
 export interface NewPlayer {

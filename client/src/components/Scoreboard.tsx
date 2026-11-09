@@ -10,6 +10,18 @@ export function Scoreboard() {
   const view = g.view!;
   const muted = useMuted();
   const [pops, setPops] = useState<Record<string, { pts: number; key: number }>>({});
+  // The latest emoji each player sent, shown by their name for a moment.
+  const [bubbles, setBubbles] = useState<Record<string, { emoji: string; key: number }>>({});
+
+  useEffect(
+    () =>
+      g.onReact(({ playerId, emoji }) => {
+        const key = Date.now() + Math.random();
+        setBubbles((b) => ({ ...b, [playerId]: { emoji, key } }));
+        setTimeout(() => setBubbles((b) => (b[playerId]?.key === key ? (({ [playerId]: _, ...rest }) => rest)(b) : b)), 2000);
+      }),
+    [g],
+  );
 
   useEffect(
     () =>
@@ -43,7 +55,14 @@ export function Scoreboard() {
         return (
           <li key={p.id} className={`${p.id === view.you ? "me" : ""} ${p.guessed ? "guessed" : ""} ${drawing ? "drawing" : ""}`}>
             <span className="rank">#{rank}</span>
-            <Avatar avatar={p.avatar} size={38} />
+            <span className="avatar-slot">
+              <Avatar avatar={p.avatar} size={38} />
+              {bubbles[p.id] && !muted.has(p.id) && (
+                <span className="react-bubble" key={bubbles[p.id].key} aria-hidden="true">
+                  {bubbles[p.id].emoji}
+                </span>
+              )}
+            </span>
             <span className="who">
               <span className="pname">
                 {p.name}

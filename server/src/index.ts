@@ -171,6 +171,7 @@ io.on("connection", (socket) => {
   socket.on("drawoff:continue", guard(() => roomOf(socket)?.hostContinue(socket.id)));
   socket.on("perim:shape", guard((shape) => roomOf(socket)?.submitShape(socket.id, shape)));
   socket.on("perim:answer", guard((value) => roomOf(socket)?.answer(socket.id, value)));
+  socket.on("react", guard((emoji) => roomOf(socket)?.react(socket.id, emoji)));
   socket.on("disconnect", () => leaveRoom(socket));
 });
 

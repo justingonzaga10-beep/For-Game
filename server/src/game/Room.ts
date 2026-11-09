@@ -1,6 +1,7 @@
 import {
   LIMITS,
   TIMING,
+  reactionsFor,
   sanitizeText,
   type ChatKind,
   type ChatMessage,
@@ -123,6 +124,7 @@ export class Room implements RoomContext {
       guessed: false,
       chatLimit: new TokenBucket(6, 1.5),
       drawLimit: new TokenBucket(80, 45),
+      reactLimit: new TokenBucket(4, 1),
     };
     this.players.set(p.id, p);
     if (!this.isPublic && !this.hostId) this.hostId = p.id;
@@ -308,6 +310,15 @@ export class Room implements RoomContext {
     }
     if (this.inGame && this.mode.handleChat(p, text)) return;
     this.io.broadcast("chat", [this.msg("chat", maskProfanity(text), p)]);
+  }
+
+  /** An emoji reaction: only from the mode's set, a few a second at most, and only during a game (podium included). */
+  react(byId: string, emoji: unknown): void {
+    const p = this.players.get(byId);
+    if (!p || this.phase === "lobby" || typeof emoji !== "string") return;
+    if (!reactionsFor(this.settings.mode, this.isPublic).includes(emoji)) return;
+    if (!p.reactLimit.take()) return; // spam is dropped quietly
+    this.io.broadcast("fx:react", [{ playerId: byId, emoji }]);
   }
 
   /* ---------------------------------------------------------------- */

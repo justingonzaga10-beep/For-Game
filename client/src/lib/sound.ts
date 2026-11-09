@@ -96,6 +96,11 @@ export const sfx = {
     note(N.C4, 0, 0.8, "triangle", 0.2);
   },
   click: () => note(900, 0, 0.03, "square", 0.08),
+  /** A soft bubble pop for emoji reactions. */
+  react: () => {
+    note(N.G5, 0, 0.05, "sine", 0.08);
+    note(N.C6, 0.04, 0.07, "sine", 0.06);
+  },
   /** A gentle "not quite" (wrong answer). */
   wrong: () => {
     note(N.E4, 0, 0.09, "triangle", 0.18);

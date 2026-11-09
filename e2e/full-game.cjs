@@ -57,6 +57,25 @@ const ok = (cond, msg) => { console.log(cond ? "  ✓" : "  ✗", msg); if (!con
     await drawer.waitForSelector(".word-real.drawer");
     const word = (await drawer.textContent(".word-real.drawer")).replace(/^Draw this/, "").trim();
 
+    if (turn === 0) {
+      // Emoji reactions: everyone sees who sent which emoji; only the mode's set is offered.
+      ok((await ana.locator(".react-btn").count()) === 8, "eight reaction buttons");
+      await cai.click('.react-btn[aria-label="React 😂"]');
+      await ben.click('.react-btn[aria-label="React 🔥"]');
+      for (const p of players) {
+        await p.waitForFunction(() => document.querySelectorAll(".floater").length >= 2, null, { timeout: 3000 }).catch(() => {});
+        const names = await p.locator(".floater .f-name").allTextContents();
+        ok(names.includes("Cai") && names.includes("Ben"), `${p.name} sees the reactions with names (${names.join(", ")})`);
+      }
+      ok((await ana.locator(".scoreboard .react-bubble").count()) === 2, "reactions pop up by the senders' names");
+      await ana.screenshot({ path: `${SHOTS}/reactions.png` });
+      await cai.screenshot({ path: `${SHOTS}/reactions-phone.png` });
+      for (let i = 0; i < 8; i++) await ben.click('.react-btn[aria-label="React 👏"]');
+      await ana.waitForTimeout(300);
+      const claps = await ana.locator(".floater:has-text('👏')").count();
+      ok(claps >= 3 && claps < 8, `spamming reactions is limited (${claps} of 8 got through)`);
+    }
+
     // Timers agree across tabs (server-authoritative, offset-corrected).
     const nums = await Promise.all(players.map((p) => p.textContent(".ring-num")));
     const spread = Math.max(...nums.map(Number)) - Math.min(...nums.map(Number));

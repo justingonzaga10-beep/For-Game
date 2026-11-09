@@ -5,3 +5,4 @@ export * from "./types";
 export * from "./text";
 export * from "./music";
 export * from "./perimeter";
+export * from "./reactions";
