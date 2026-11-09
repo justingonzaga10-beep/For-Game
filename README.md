@@ -1,9 +1,10 @@
 # Quantum Doodle
 
-**Draw it. Guess it. Glow.** Quantum Doodle is a real-time multiplayer drawing game for the browser, styled as a neon synthwave arcade. It has two modes:
+**Draw it. Guess it. Glow.** Quantum Doodle is a real-time multiplayer drawing game for the browser, styled as a neon synthwave arcade. It has three modes:
 
 - **Guessing:** one player draws a word, everyone else races to guess it in chat, and faster guesses score more.
 - **Draw-Off:** everyone draws the same theme at the same time, then rates each other's drawings from 1 to 5 stars.
+- **Perimeter:** a maths mode. One player makes a shape with measurements (a rectangle 8 cm by 3 cm, a triangle, an L-shape), everyone else works out its perimeter, and the reveal shows the working.
 
 - Public matchmaking or private rooms with a shareable invite link (`/room/ABC234`)
 - Host settings: 2–20 players, 2–10 rounds, 15–240 s turns, 1–5 word choices, 0–5 letter hints, Normal / Hidden / Combination word modes, and custom word lists
@@ -57,6 +58,7 @@ server/   Express + Socket.IO game server
   src/game/GameMode.ts     The interface a game mode implements, and the room context it gets
   src/game/GuessMode.ts    Guessing: choosing → drawing → reveal, turn by turn
   src/game/DrawOffMode.ts  Draw-Off: drawing → voting → results → gallery, round by round
+  src/game/PerimeterMode.ts  Perimeter: build a shape → solve → reveal, turn by turn
   src/game/CanvasState.ts  Server-side draw-op validation and action log (one per canvas)
   src/game/RoomManager.ts  Room codes, public matchmaking, cleanup of empty rooms
   src/game/scoring.ts      Guesser and drawer points, ranking
@@ -71,6 +73,7 @@ client/   React + Vite front end
   src/canvas/DrawCanvas.tsx  Pointer/touch/pen input, 30 ms network batching (shared or private canvas)
   src/components/GameScreen.tsx  Guessing screen
   src/components/DrawOff.tsx     Draw-Off screens: drawing, voting, results, gallery
+  src/components/Perimeter.tsx   Perimeter screens: shape builder, number pad, reveal
   src/lib/game.tsx         Socket state, clock-offset timer, canvas log
   src/lib/sound.ts         WebAudio chiptune effects (no audio files)
 e2e/      Playwright scripts that play real games in several browser contexts
@@ -119,6 +122,18 @@ After the last round, the final podium shows, then the room returns to the lobby
 
 **Themes** live in `server/src/themes/en.json`. They are short, open prompts of 1–2 words ("Dragon", "Dream House", "Kindness") so every player can imagine them their own way. Add, remove or edit lines in the `themes` list and redeploy. A unit test checks there are at least 50, each 1–2 words, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
 
+### Perimeter
+
+A maths mode for private rooms (2 or more players). Each round, every player takes a turn:
+
+1. **Make a shape** (30 s). The drawer picks a rectangle, square, triangle or L-shape and sets each side with + / − buttons (or 🎲 for random numbers). A live preview draws it to scale with the measurements beside each side. The game won't accept impossible shapes, such as a triangle whose two shorter sides don't add up to more than the longest. If time runs out, a random shape is used.
+2. **Solve it.** Everyone else sees the shape and its measurements and types the perimeter on a big number pad (or as a number in chat). Answers are private: a close answer gets *"Close! Did you add all the sides?"*, others get *"Try again!"*. Faster correct answers score more (same scoring as Guessing), and the drawer earns points for the share who solve it. Meanwhile the drawer decorates the shape with the normal tools; the outline can't be erased, and fills stay inside it. The drawer can't type the answer in chat.
+3. **Reveal** (7 s). Each side lights up in turn as the sum builds: **8 + 3 + 8 + 3 = 22 cm**, plus a shortcut for rectangles and squares (**2 × (8 + 3) = 22 cm**, **4 × 5 = 20 cm**).
+
+Teacher settings in the lobby: answer time (20–180 s), units (cm or m), number size (1–10, 1–20 or 1–50), which shapes are allowed, and a **challenge** option that lets the drawer hide one measurement on a rectangle or L-shape (shown as **?**), so students work it out from the other sides.
+
+The shape rules, geometry and equations live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
+
 ### Moderation and safety
 
 - The host of a private room can kick or ban players. Bans cover the player's browser id and IP for that room.
@@ -155,6 +170,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/lobby.cjs`: create a room, invite link, settings sync, join, kick, start, quick play, profane nickname refused
 - `e2e/full-game.cjs`: three players (one on a phone-sized screen) play a complete 2-round game. Checks timer sync, blanks, close guesses, correct guesses, word secrecy, guessed-only chat, the drawer word block, turn order, podium, and the return to the lobby
 - `e2e/resilience.cjs`: public matchmaking, joining mid-game with a pixel-identical canvas, the drawer leaving mid-turn, host handoff, and score restore after a reload
+- `e2e/perimeter.cjs`: three players (one on a phone-sized screen) play a 2-round Perimeter game. Checks the settings, the builder (hiding a measurement, rejecting an impossible triangle), private feedback for wrong, close and right answers, answering in chat, the drawer's fill, the reveal's working, turn order, and the return to the lobby
 - `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).
