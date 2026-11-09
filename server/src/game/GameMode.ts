@@ -63,7 +63,7 @@ export interface RoomContext {
 }
 
 /** The parts of a player's view that depend on the mode. */
-export type ModeView = Pick<RoomView, "drawerId" | "pattern" | "word" | "choices" | "reveal" | "drawOff">;
+export type ModeView = Pick<RoomView, "drawerId" | "pattern" | "word" | "choices" | "reveal" | "drawOff" | "perimeter">;
 
 export interface GameMode {
   /** Fewest players the mode can run with; below this a running game returns to the lobby. */
@@ -83,6 +83,10 @@ export interface GameMode {
   vote?(byId: string, entryId: unknown, stars: unknown): void;
   /** Draw-Off only: the host ends the gallery early. */
   hostContinue?(): void;
+  /** Perimeter only: the drawer's finished shape. */
+  submitShape?(byId: string, shape: unknown): void;
+  /** Perimeter only: a player's answer. */
+  answer?(byId: string, value: unknown): void;
   /** Return true if the mode handled the message; otherwise it is broadcast as normal chat. */
   handleChat(p: Player, text: string): boolean;
   view(playerId: string): ModeView;

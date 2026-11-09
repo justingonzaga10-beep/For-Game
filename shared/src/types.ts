@@ -1,5 +1,6 @@
 import type { Avatar } from "./avatar";
 import type { LanguageCode, RoomSettings } from "./constants";
+import type { PerimeterShape } from "./perimeter";
 
 /* ------------------------------------------------------------------ */
 /* Drawing                                                             */
@@ -59,6 +60,10 @@ export type Phase =
   | "drawoff_voting"
   | "drawoff_results"
   | "drawoff_gallery"
+  // Perimeter mode
+  | "perim_build"
+  | "perim_solve"
+  | "perim_reveal"
   // Both: final scores
   | "podium";
 
@@ -79,6 +84,17 @@ export interface DrawOffResult {
   points: number;
   /** 1 = best; ties share a rank. */
   rank: number;
+}
+
+/** What one player sees of a Perimeter turn. */
+export interface PerimeterView {
+  /** The drawer's shape, once made (null while they build it). */
+  shape: PerimeterShape | null;
+  unit: "cm" | "m";
+  /** The correct perimeter: for the drawer, players who solved it, and at the reveal. */
+  answer: number | null;
+  /** Worked answer at the reveal: "8 + 3 + 8 + 3 = 22 cm" and a shortcut if there is one. */
+  equation: { sum: string; shortcut: string | null } | null;
 }
 
 /** What one player sees of a Draw-Off round. */
@@ -149,8 +165,10 @@ export interface RoomView {
   /** Server clock at send time, for clock-offset correction. */
   serverNow: number;
   reveal: RevealInfo | null;
-  /** Draw-Off state, or null in guessing mode. */
+  /** Draw-Off state, or null in other modes. */
   drawOff: DrawOffView | null;
+  /** Perimeter state, or null in other modes. */
+  perimeter: PerimeterView | null;
   podium: PodiumEntry[] | null;
   /** Ids you have voted to kick. */
   yourKickVotes: string[];
@@ -207,6 +225,10 @@ export interface ClientToServerEvents {
   "drawoff:vote": (entryId: string, stars: number) => void;
   /** Draw-Off: the host ends the gallery early. */
   "drawoff:continue": () => void;
+  /** Perimeter: the drawer's finished shape. */
+  "perim:shape": (shape: PerimeterShape) => void;
+  /** Perimeter: a player's answer. */
+  "perim:answer": (value: number) => void;
 }
 
 export interface ServerToClientEvents {
@@ -225,6 +247,8 @@ export interface ServerToClientEvents {
   "drawoff:canvas": (actions: DrawAction[]) => void;
   /** Draw-Off: every drawing of the round, sent once when voting starts. */
   "drawoff:entries": (entries: DrawOffEntry[]) => void;
+  /** Perimeter: private feedback on your answer. */
+  "perim:feedback": (info: { result: "correct" | "close" | "wrong"; value: number }) => void;
 }
 
 export interface SocketData {

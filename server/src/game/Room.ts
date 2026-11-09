@@ -15,6 +15,7 @@ import {
 import type { GameMode, NewPlayer, Player, RemovalReason, RoomContext, RoomTransport } from "./GameMode";
 import { DrawOffMode } from "./DrawOffMode";
 import { GuessMode } from "./GuessMode";
+import { PerimeterMode } from "./PerimeterMode";
 import { maskProfanity } from "./profanity";
 import { TokenBucket } from "./rateLimit";
 import { rankScores } from "./scoring";
@@ -41,6 +42,7 @@ export class Room implements RoomContext {
 
   private readonly guess: GuessMode;
   readonly drawOff: DrawOffMode;
+  readonly perimeter: PerimeterMode;
   private mode: GameMode;
 
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -64,6 +66,7 @@ export class Room implements RoomContext {
     this.settings = { ...settings };
     this.guess = new GuessMode(this);
     this.drawOff = new DrawOffMode(this);
+    this.perimeter = new PerimeterMode(this);
     this.mode = this.guess;
   }
 
@@ -178,7 +181,10 @@ export class Room implements RoomContext {
 
   /** The mode the current settings ask for. Public rooms always play guessing. */
   private modeForSettings(): GameMode {
-    return this.settings.mode === "drawoff" && !this.isPublic ? this.drawOff : this.guess;
+    if (this.isPublic) return this.guess;
+    if (this.settings.mode === "drawoff") return this.drawOff;
+    if (this.settings.mode === "perimeter") return this.perimeter;
+    return this.guess;
   }
 
   requestStart(byId: string): void {
@@ -271,6 +277,16 @@ export class Room implements RoomContext {
   /** Draw-Off: a star rating for the drawing on screen. */
   vote(byId: string, entryId: unknown, stars: unknown): void {
     if (this.inGame) this.mode.vote?.(byId, entryId, stars);
+  }
+
+  /** Perimeter: the drawer's finished shape. */
+  submitShape(byId: string, shape: unknown): void {
+    if (this.inGame) this.mode.submitShape?.(byId, shape);
+  }
+
+  /** Perimeter: a player's answer. */
+  answer(byId: string, value: unknown): void {
+    if (this.inGame) this.mode.answer?.(byId, value);
   }
 
   /** Draw-Off: the host ends the gallery early. */

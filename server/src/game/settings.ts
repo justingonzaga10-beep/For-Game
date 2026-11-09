@@ -1,7 +1,7 @@
-import { DEFAULT_SETTINGS, LIMITS, SETTING_BOUNDS, isLanguage, type GameModeId, type RoomSettings, type WordMode } from "@inkwave/shared";
+import { DEFAULT_SETTINGS, LIMITS, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_KINDS, isLanguage, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 
 const MODES: WordMode[] = ["normal", "hidden", "combination"];
-const GAME_MODE_IDS: GameModeId[] = ["guess", "drawoff"];
+const GAME_MODE_IDS: GameModeId[] = ["guess", "drawoff", "perimeter"];
 
 function clampInt(v: unknown, [min, max]: readonly [number, number], fallback: number): number {
   const n = typeof v === "number" ? v : Number(v);
@@ -27,6 +27,14 @@ export function applySettingsPatch(current: RoomSettings, patch: unknown, minPla
   if ("customOnly" in p) next.customOnly = p.customOnly === true;
   if ("mode" in p && GAME_MODE_IDS.includes(p.mode as GameModeId)) next.mode = p.mode as GameModeId;
   if ("drawOffTime" in p) next.drawOffTime = clampInt(p.drawOffTime, SETTING_BOUNDS.drawOffTime, current.drawOffTime);
+  if ("perimeterTime" in p) next.perimeterTime = clampInt(p.perimeterTime, SETTING_BOUNDS.perimeterTime, current.perimeterTime);
+  if (p.perimeterUnit === "cm" || p.perimeterUnit === "m") next.perimeterUnit = p.perimeterUnit;
+  if ("perimeterMax" in p && (PERIMETER_MAXES as readonly number[]).includes(Number(p.perimeterMax))) next.perimeterMax = Number(p.perimeterMax);
+  if ("perimeterShapes" in p && Array.isArray(p.perimeterShapes)) {
+    const kinds = SHAPE_KINDS.filter((k) => (p.perimeterShapes as unknown[]).includes(k)) as ShapeKind[];
+    if (kinds.length) next.perimeterShapes = kinds; // at least one shape must stay on
+  }
+  if ("perimeterChallenge" in p) next.perimeterChallenge = p.perimeterChallenge === true;
   return next;
 }
 

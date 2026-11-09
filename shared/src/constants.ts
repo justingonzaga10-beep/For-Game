@@ -36,13 +36,18 @@ export const TIMING = {
   drawOffResultsSeconds: 10,
   /** Draw-Off: browsing the round's drawings (the host can skip ahead). */
   drawOffGallerySeconds: 20,
+  /** Perimeter: time for the drawer to make the shape (then a random one is used). */
+  perimeterBuildSeconds: 30,
+  /** Perimeter: the step-by-step answer at the end of a turn. */
+  perimeterRevealSeconds: 7,
 } as const;
 
 /** "guess": one draws, the rest guess. "drawoff": everyone draws the same theme, then rates each other. */
-export type GameModeId = "guess" | "drawoff";
+export type GameModeId = "guess" | "drawoff" | "perimeter";
 export const GAME_MODES: { id: GameModeId; label: string }[] = [
   { id: "guess", label: "Guessing" },
   { id: "drawoff", label: "Draw-Off" },
+  { id: "perimeter", label: "Perimeter" },
 ];
 /** Draw-Off needs three players so everyone has at least two drawings to rate. */
 export const DRAWOFF_MIN_PLAYERS = 3;
@@ -62,6 +67,15 @@ export interface RoomSettings {
   customOnly: boolean;
   /** Draw-Off drawing time in seconds. */
   drawOffTime: number;
+  /** Perimeter: answering time in seconds. */
+  perimeterTime: number;
+  perimeterUnit: "cm" | "m";
+  /** Perimeter: biggest side length (10, 20 or 50). */
+  perimeterMax: number;
+  /** Perimeter: shapes the drawer may choose. */
+  perimeterShapes: ("rect" | "square" | "triangle" | "lshape")[];
+  /** Perimeter: the drawer may hide one measurement on a rectangle or L-shape. */
+  perimeterChallenge: boolean;
 }
 
 export const SETTING_BOUNDS = {
@@ -71,6 +85,7 @@ export const SETTING_BOUNDS = {
   wordChoices: [1, 5],
   hints: [0, 5],
   drawOffTime: [30, 240],
+  perimeterTime: [20, 180],
 } as const;
 
 export const DEFAULT_SETTINGS: RoomSettings = {
@@ -85,6 +100,11 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   customWords: "",
   customOnly: false,
   drawOffTime: 90,
+  perimeterTime: 60,
+  perimeterUnit: "cm",
+  perimeterMax: 20,
+  perimeterShapes: ["rect", "square", "triangle", "lshape"],
+  perimeterChallenge: false,
 };
 
 /** Brush sizes in logical pixels, selected with keys 1-5. */

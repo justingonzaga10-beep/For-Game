@@ -4,3 +4,4 @@ export * from "./matching";
 export * from "./types";
 export * from "./text";
 export * from "./music";
+export * from "./perimeter";

@@ -324,6 +324,7 @@ export class DrawOffMode implements GameMode {
             results: phase === "drawoff_results" || phase === "drawoff_gallery" ? this.results : null,
           }
         : null,
+      perimeter: null,
     };
   }
 }
