@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { CANVAS_H, CANVAS_W, PAPER, type DrawAction, type DrawOp } from "@inkwave/shared";
+import { CANVAS_H, CANVAS_W, PAPER, type BrushKind, type DrawAction, type DrawOp } from "@inkwave/shared";
 import type { CanvasLogEvent, CanvasSource } from "./canvasLog";
 import { DrawingEngine } from "./engine";
 
@@ -10,6 +10,8 @@ export interface ToolState {
   primary: string;
   secondary: string;
   pressure: boolean;
+  /** Brush texture; missing in tool settings saved before textures existed (= pen). */
+  brush?: BrushKind;
 }
 
 interface Props {
@@ -141,7 +143,8 @@ export function DrawCanvas({ source, canDraw, tools, engineRef, emitRef, base = 
       }
       const id = ++strokeId;
       active = { id, pointer: e.pointerId, lx: x, ly: y, n: 1 };
-      emit([{ k: "begin", id, color: t.tool === "eraser" ? PAPER : color, size: t.size, x: round(x), y: round(y), p: pressureOf(e) }]);
+      const brush = t.tool === "brush" && t.brush && t.brush !== "pen" ? t.brush : undefined; // the eraser is always solid
+      emit([{ k: "begin", id, color: t.tool === "eraser" ? PAPER : color, size: t.size, x: round(x), y: round(y), p: pressureOf(e), ...(brush ? { brush } : {}) }]);
     };
 
     const move = (e: PointerEvent) => {

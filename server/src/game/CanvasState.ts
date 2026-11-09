@@ -1,4 +1,4 @@
-import { CANVAS_H, CANVAS_W, LIMITS, type DrawAction, type DrawOp } from "@inkwave/shared";
+import { CANVAS_H, CANVAS_W, LIMITS, isBrushKind, type BrushKind, type DrawAction, type DrawOp } from "@inkwave/shared";
 
 const HEX = /^#[0-9a-f]{6}$/i;
 const num = (v: unknown, min: number, max: number, fallback = 0) => {
@@ -14,7 +14,7 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
  */
 export class CanvasState {
   private actionsList: DrawAction[] = [];
-  private stroke: { id: number; color: string; size: number; pts: number[] } | null = null;
+  private stroke: { id: number; color: string; size: number; pts: number[]; brush?: BrushKind } | null = null;
   private points = 0;
 
   constructor(private readonly maxPoints: number = LIMITS.pointsPerTurn) {}
@@ -26,7 +26,7 @@ export class CanvasState {
   /** Completed actions plus the stroke in progress, as one list (for submitting a drawing). */
   snapshot(): DrawAction[] {
     const out = [...this.actionsList];
-    if (this.stroke) out.push({ t: "stroke", color: this.stroke.color, size: this.stroke.size, pts: [...this.stroke.pts] });
+    if (this.stroke) out.push(this.strokeAction({ ...this.stroke, pts: [...this.stroke.pts] }));
     return out;
   }
 
@@ -52,9 +52,9 @@ export class CanvasState {
   liveStrokeOps(): DrawOp[] {
     if (!this.stroke || this.stroke.pts.length < 3) return [];
     const [x, y, p, ...rest] = this.stroke.pts;
-    const { id, color, size } = this.stroke;
+    const { id, color, size, brush } = this.stroke;
     return [
-      { k: "begin", id, color, size, x, y, p },
+      { k: "begin", id, color, size, x, y, p, ...(brush ? { brush } : {}) },
       { k: "pts", id, pts: rest },
     ];
   }
@@ -83,7 +83,17 @@ export class CanvasState {
     switch (o.k) {
       case "begin":
         if (id < 0 || typeof o.color !== "string" || !HEX.test(o.color)) return null;
-        return { k: "begin", id, color: o.color, size: num(o.size, 1, 60, 8), x: x(o.x), y: y(o.y), p: pr(o.p) };
+        return {
+          k: "begin",
+          id,
+          color: o.color,
+          size: num(o.size, 1, 60, 8),
+          x: x(o.x),
+          y: y(o.y),
+          p: pr(o.p),
+          // A texture other than the plain pen; anything unknown draws as a pen.
+          ...(isBrushKind(o.brush) && o.brush !== "pen" ? { brush: o.brush } : {}),
+        };
       case "pts": {
         if (id < 0 || !Array.isArray(o.pts)) return null;
         const room = Math.min(pointBudget, this.maxPoints - this.points);
@@ -107,10 +117,13 @@ export class CanvasState {
     }
   }
 
+  private strokeAction(s: { color: string; size: number; pts: number[]; brush?: BrushKind }): DrawAction {
+    return { t: "stroke", color: s.color, size: s.size, pts: s.pts, ...(s.brush ? { brush: s.brush } : {}) };
+  }
+
   private finishStroke(): void {
     if (this.stroke) {
-      const { color, size, pts } = this.stroke;
-      this.actionsList.push({ t: "stroke", color, size, pts });
+      this.actionsList.push(this.strokeAction(this.stroke));
       this.stroke = null;
     }
   }
@@ -119,7 +132,7 @@ export class CanvasState {
     switch (op.k) {
       case "begin":
         this.finishStroke();
-        this.stroke = { id: op.id, color: op.color, size: op.size, pts: [op.x, op.y, op.p] };
+        this.stroke = { id: op.id, color: op.color, size: op.size, pts: [op.x, op.y, op.p], ...(op.brush ? { brush: op.brush } : {}) };
         this.points++;
         break;
       case "pts":

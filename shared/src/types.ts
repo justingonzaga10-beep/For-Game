@@ -1,5 +1,5 @@
 import type { Avatar } from "./avatar";
-import type { LanguageCode, RoomSettings } from "./constants";
+import type { BrushKind, LanguageCode, RoomSettings } from "./constants";
 import type { Measure, PerimeterShape } from "./perimeter";
 
 /* ------------------------------------------------------------------ */
@@ -14,7 +14,7 @@ export const PAPER = "#fbfaf6";
  * Points are flat [x, y, pressure, x, y, pressure, ...] in logical pixels.
  */
 export type DrawOp =
-  | { k: "begin"; id: number; color: string; size: number; x: number; y: number; p: number }
+  | { k: "begin"; id: number; color: string; size: number; x: number; y: number; p: number; brush?: BrushKind }
   | { k: "pts"; id: number; pts: number[] }
   | { k: "end"; id: number }
   | { k: "fill"; x: number; y: number; color: string }
@@ -23,7 +23,7 @@ export type DrawOp =
 
 /** Completed canvas actions, kept for undo and for replaying to late joiners. */
 export type DrawAction =
-  | { t: "stroke"; color: string; size: number; pts: number[] }
+  | { t: "stroke"; color: string; size: number; pts: number[]; brush?: BrushKind }
   | { t: "fill"; x: number; y: number; color: string }
   | { t: "clear" };
 

@@ -1,4 +1,4 @@
-import { BRUSH_SIZES, PALETTE } from "@inkwave/shared";
+import { BRUSH_KINDS, BRUSH_SIZES, PALETTE, type BrushKind } from "@inkwave/shared";
 import type { Tool, ToolState } from "./DrawCanvas";
 
 interface Props {
@@ -43,6 +43,63 @@ const TOOL_INFO: { id: Tool; label: string; key: string; icon: JSX.Element }[] =
     ),
   },
 ];
+
+/** Little previews of each texture, drawn in the current colour. */
+function BrushIcon({ kind, color }: { kind: BrushKind; color: string }) {
+  const id = `bi-${kind}`;
+  switch (kind) {
+    case "pen":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 17c4-8 8 2 16-8" fill="none" stroke={color} strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      );
+    case "soft":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <radialGradient id={id}>
+              <stop offset="0" stopColor={color} stopOpacity="0.75" />
+              <stop offset="1" stopColor={color} stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <circle cx="12" cy="12" r="10" fill={`url(#${id})`} />
+        </svg>
+      );
+    case "spray":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill={color}>
+          {[
+            [12, 12], [8, 9], [15, 8], [16, 14], [9, 15], [12, 5], [5, 12], [19, 11], [12, 19], [7, 6], [17, 18], [6, 17], [13, 15], [10, 11],
+          ].map(([x, y], i) => (
+            <circle key={i} cx={x} cy={y} r={i < 5 ? 1.4 : 1} />
+          ))}
+        </svg>
+      );
+    case "hatch":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <clipPath id={id}>
+              <circle cx="12" cy="12" r="9.5" />
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${id})`} stroke={color} strokeWidth="2">
+            {[-12, -6, 0, 6, 12].map((o) => (
+              <line key={o} x1={o} y1="24" x2={24 + o} y2="0" />
+            ))}
+          </g>
+        </svg>
+      );
+    case "crayon":
+      return (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 17c4-8 8 2 16-8" fill="none" stroke={color} strokeWidth="7" strokeDasharray="1.1 0.9" opacity="0.85" />
+          <path d="M4 17c4-8 8 2 16-8" fill="none" stroke={color} strokeWidth="3" strokeDasharray="0.8 1.6" />
+        </svg>
+      );
+  }
+}
 
 export function Toolbar({ tools, setTools, onUndo, onClear }: Props) {
   const set = (patch: Partial<ToolState>) => setTools({ ...tools, ...patch });
@@ -93,6 +150,26 @@ export function Toolbar({ tools, setTools, onUndo, onClear }: Props) {
             <span style={{ width: Math.min(26, 4 + s * 0.55), height: Math.min(26, 4 + s * 0.55) }} />
           </button>
         ))}
+      </div>
+
+      <div className="tool-group brushes" role="radiogroup" aria-label="Brush texture">
+        {BRUSH_KINDS.map((b) => {
+          const on = tools.tool === "brush" && (tools.brush ?? "pen") === b.id;
+          return (
+            <button
+              key={b.id}
+              type="button"
+              role="radio"
+              className={`tbtn brush-kind ${on ? "on" : ""}`}
+              aria-checked={on}
+              aria-label={b.label}
+              title={b.label}
+              onClick={() => set({ brush: b.id, tool: "brush" })}
+            >
+              <BrushIcon kind={b.id} color={tools.primary === "#ffffff" ? "#9a96a0" : tools.primary} />
+            </button>
+          );
+        })}
       </div>
 
       <div className="tool-group">

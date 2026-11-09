@@ -110,6 +110,21 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   perimeterChallenge: false,
 };
 
+/**
+ * Brush textures. "pen" is a solid line; the others add shading and texture:
+ * soft (see-through, builds up when you go over it), spray (airbrush dots),
+ * hatch (diagonal shading lines) and crayon (grainy).
+ */
+export type BrushKind = "pen" | "soft" | "spray" | "hatch" | "crayon";
+export const BRUSH_KINDS: { id: BrushKind; label: string }[] = [
+  { id: "pen", label: "Pen" },
+  { id: "soft", label: "Soft shade" },
+  { id: "spray", label: "Spray" },
+  { id: "hatch", label: "Hatch" },
+  { id: "crayon", label: "Crayon" },
+];
+export const isBrushKind = (v: unknown): v is BrushKind => BRUSH_KINDS.some((b) => b.id === v);
+
 /** Brush sizes in logical pixels, selected with keys 1-5. */
 export const BRUSH_SIZES = [4, 8, 14, 24, 40] as const;
 

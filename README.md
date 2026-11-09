@@ -145,6 +145,18 @@ Perimeter and Area share the lobby's shape list; each mode only shows (and only 
 
 The shape rules, geometry and equations for both modes live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
 
+### Brush textures (shading)
+
+Next to the drawing tools is a row of brush textures, for shading and adding texture to a drawing. They work in every mode where you draw, with any colour and size:
+
+- **Pen:** the normal solid line.
+- **Soft shade:** see-through and soft-edged. Going over an area again makes it darker, like shading with a pencil.
+- **Spray:** an airbrush of fine dots.
+- **Hatch:** diagonal shading lines (best with the bigger sizes).
+- **Crayon:** a waxy, grainy line with paper showing through.
+
+The texture is sent with each stroke, and the spray's "random" dots come from a seed taken from the stroke itself, so every player, a late joiner, undo and the Draw-Off gallery all show exactly the same pixels. The eraser always erases solidly.
+
 ### Emoji reactions
 
 During a game (in every mode), a row of emoji buttons sits above the chat (below the board on phones). Tap one and it floats up over the board with your name on everyone's screen, and pops up by your name in the player list. Each mode has its own set of eight:
@@ -196,6 +208,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/resilience.cjs`: public matchmaking, joining mid-game with a pixel-identical canvas, the drawer leaving mid-turn, host handoff, and score restore after a reload
 - `e2e/perimeter.cjs`: three players (one on a phone-sized screen) play a 2-round Perimeter game. Checks the settings, the builder (hiding a measurement, rejecting an impossible triangle), private feedback for wrong, close and right answers, answering in chat, the drawer's fill, the reveal's working, turn order, and the return to the lobby
 - `e2e/area.cjs`: three players (one on a phone-sized screen) play a 2-round Area game. Checks Area's own shapes, the perimeter mix-up hint, close and right answers, answering in chat, shaded parts and step-by-step working at the reveal, a 7.5 answer on the decimal keypad, the house's roof height, and the return to the lobby
+- `e2e/brushes.cjs`: the drawer uses every brush texture; checks that each looks right (soft is see-through, spray, hatch and crayon leave gaps) and that the other player, and a player who joins late, see exactly the same pixels, before and after undo
 - `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).
