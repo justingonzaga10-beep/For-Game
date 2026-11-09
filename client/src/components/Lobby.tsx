@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BASIC_SHAPES, COMPOSITE_SHAPES, DRAWOFF_MIN_PLAYERS, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
+import { DRAWOFF_MIN_PLAYERS, MEASURE_SHAPES, kindsFor, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
@@ -13,6 +13,7 @@ const GAME_MODE_CARDS: { id: GameModeId; title: string; blurb: string }[] = [
   { id: "guess", title: "Guessing", blurb: "One player draws, everyone else races to guess the word." },
   { id: "drawoff", title: "Draw-Off", blurb: "Everyone draws the same theme, then rates each other's art." },
   { id: "perimeter", title: "Perimeter", blurb: "Make a shape with measurements. Everyone finds its perimeter." },
+  { id: "area", title: "Area", blurb: "Make a shape with measurements. Everyone finds its area." },
 ];
 const PERIM_TIMES = [20, 30, 45, 60, 75, 90, 120, 150, 180];
 /** Keeps the current value selectable even if it isn't one of the presets. */
@@ -60,11 +61,14 @@ export function Lobby() {
   };
 
   const isDrawOff = s.mode === "drawoff" && !view.isPublic;
-  const isPerimeter = s.mode === "perimeter" && !view.isPublic;
+  const isArea = s.mode === "area" && !view.isPublic;
+  // Perimeter and Area share their settings.
+  const isPerimeter = (s.mode === "perimeter" || isArea) && !view.isPublic;
+  const measure = isArea ? "area" : "perimeter";
   const isGuess = !isDrawOff && !isPerimeter;
   const toggleShape = (k: ShapeKind) => {
     const on = s.perimeterShapes.includes(k);
-    if (on && s.perimeterShapes.length === 1) return; // keep at least one
+    if (on && s.perimeterShapes.filter((x) => kindsFor(measure).includes(x)).length === 1) return; // keep at least one in this mode
     set({ perimeterShapes: on ? s.perimeterShapes.filter((x) => x !== k) : [...s.perimeterShapes, k] });
   };
   const minPlayers = isDrawOff ? DRAWOFF_MIN_PLAYERS : 2;
@@ -146,7 +150,7 @@ export function Lobby() {
                 ))}
               </div>
               {isDrawOff && <small className="muted">Needs at least {DRAWOFF_MIN_PLAYERS} players. Themes are in English.</small>}
-              {isPerimeter && <small className="muted">Each player makes a shape with measurements; the others work out its perimeter.</small>}
+              {isPerimeter && <small className="muted">Each player makes a shape with measurements; the others work out its {measure}.</small>}
             </div>
           )}
           {isGuess && (
@@ -223,8 +227,8 @@ export function Lobby() {
               <div className="field wide">
                 <span>Shapes</span>
                 {[
-                  { name: "Basic", list: BASIC_SHAPES },
-                  { name: "Composite", list: COMPOSITE_SHAPES },
+                  { name: "Basic", list: MEASURE_SHAPES[measure].basic },
+                  { name: "Composite", list: MEASURE_SHAPES[measure].composite },
                 ].map((group) => (
                   <div className="shape-chips" key={group.name}>
                     <small className="chip-group">{group.name}</small>
@@ -333,7 +337,7 @@ export function Lobby() {
             </p>
           ) : isHost ? (
             <button type="button" className="btn primary big" disabled={!enough} onClick={g.start}>
-              {enough ? `Start ${isDrawOff ? "Draw-Off" : isPerimeter ? "Perimeter" : "game"}` : `Waiting for players (${view.players.length}/${minPlayers})`}
+              {enough ? `Start ${isDrawOff ? "Draw-Off" : isArea ? "Area" : isPerimeter ? "Perimeter" : "game"}` : `Waiting for players (${view.players.length}/${minPlayers})`}
             </button>
           ) : (
             <p className="status">Waiting for the host to start the game…</p>

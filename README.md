@@ -5,6 +5,7 @@
 - **Guessing:** one player draws a word, everyone else races to guess it in chat, and faster guesses score more.
 - **Draw-Off:** everyone draws the same theme at the same time, then rates each other's drawings from 1 to 5 stars.
 - **Perimeter:** a maths mode. One player makes a shape with measurements (a rectangle 8 cm by 3 cm, a triangle, an L-shape), everyone else works out its perimeter, and the reveal shows the working.
+- **Area:** the same idea for area. Everyone works out the space inside the shape (in cm² or m²), and the reveal shades the parts and shows the multiplying.
 
 - Public matchmaking or private rooms with a shareable invite link (`/room/ABC234`)
 - Host settings: 2–20 players, 2–10 rounds, 15–240 s turns, 1–5 word choices, 0–5 letter hints, Normal / Hidden / Combination word modes, and custom word lists
@@ -58,7 +59,7 @@ server/   Express + Socket.IO game server
   src/game/GameMode.ts     The interface a game mode implements, and the room context it gets
   src/game/GuessMode.ts    Guessing: choosing → drawing → reveal, turn by turn
   src/game/DrawOffMode.ts  Draw-Off: drawing → voting → results → gallery, round by round
-  src/game/PerimeterMode.ts  Perimeter: build a shape → solve → reveal, turn by turn
+  src/game/PerimeterMode.ts  Perimeter and Area: build a shape → solve → reveal, turn by turn
   src/game/CanvasState.ts  Server-side draw-op validation and action log (one per canvas)
   src/game/RoomManager.ts  Room codes, public matchmaking, cleanup of empty rooms
   src/game/scoring.ts      Guesser and drawer points, ranking
@@ -73,7 +74,7 @@ client/   React + Vite front end
   src/canvas/DrawCanvas.tsx  Pointer/touch/pen input, 30 ms network batching (shared or private canvas)
   src/components/GameScreen.tsx  Guessing screen
   src/components/DrawOff.tsx     Draw-Off screens: drawing, voting, results, gallery
-  src/components/Perimeter.tsx   Perimeter screens: shape builder, number pad, reveal
+  src/components/Perimeter.tsx   Perimeter and Area screens: shape builder, number pad, reveal
   src/lib/game.tsx         Socket state, clock-offset timer, canvas log
   src/lib/sound.ts         WebAudio chiptune effects (no audio files)
 e2e/      Playwright scripts that play real games in several browser contexts
@@ -132,7 +133,17 @@ A maths mode for private rooms (2 or more players). Each round, every player tak
 
 Teacher settings in the lobby: answer time (20–180 s), units (cm or m), number size (1–10, 1–20 or 1–50), which shapes are allowed, and a **challenge** option that lets the drawer hide one measurement on a rectangle, L, T or U-shape (shown as **?**), so students work it out from the other sides.
 
-The shape rules, geometry and equations live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
+### Area
+
+Plays exactly like Perimeter (same turns, scoring and teacher settings), but everyone works out the **area**:
+
+- **Shapes:** rectangle, square, right triangle (base and height, with a right-angle mark), and the composites L-shape, T-shape, U-shape and house. The house is given by its width, wall height and **roof height** (a dashed line up the middle of the roof), since the area of a triangle needs its height. Slanted sides aren't labelled, because area doesn't need them.
+- **Answers** are in cm² or m². Triangles can give half squares, so the number pad has a decimal point and answers like **7.5** are accepted (in chat too: "7.5", "7,5 cm²", "42 sq m"). If someone types the perimeter instead, they get a gentle hint: *"That's the perimeter! The area is the space inside the shape."* A close answer gets *"Check your multiplying."*
+- **Reveal:** the parts are shaded (added parts in yellow, a cut-out or gap in pink), and the working builds step by step, for example **8 × 6 − 3 × 2 = 48 − 6 = 42 cm²** or **8 × 5 + ½ × 8 × 3 = 40 + 12 = 52 cm²**, with a note on how the shape was split.
+
+Perimeter and Area share the lobby's shape list; each mode only shows (and only accepts) its own shapes.
+
+The shape rules, geometry and equations for both modes live in `shared/src/perimeter.ts`, so the server (which checks every answer) and the screens always agree.
 
 ### Moderation and safety
 
@@ -171,6 +182,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/full-game.cjs`: three players (one on a phone-sized screen) play a complete 2-round game. Checks timer sync, blanks, close guesses, correct guesses, word secrecy, guessed-only chat, the drawer word block, turn order, podium, and the return to the lobby
 - `e2e/resilience.cjs`: public matchmaking, joining mid-game with a pixel-identical canvas, the drawer leaving mid-turn, host handoff, and score restore after a reload
 - `e2e/perimeter.cjs`: three players (one on a phone-sized screen) play a 2-round Perimeter game. Checks the settings, the builder (hiding a measurement, rejecting an impossible triangle), private feedback for wrong, close and right answers, answering in chat, the drawer's fill, the reveal's working, turn order, and the return to the lobby
+- `e2e/area.cjs`: three players (one on a phone-sized screen) play a 2-round Area game. Checks Area's own shapes, the perimeter mix-up hint, close and right answers, answering in chat, shaded parts and step-by-step working at the reveal, a 7.5 answer on the decimal keypad, the house's roof height, and the return to the lobby
 - `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).

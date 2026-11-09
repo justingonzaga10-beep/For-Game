@@ -1,6 +1,6 @@
 import type { Avatar } from "./avatar";
 import type { LanguageCode, RoomSettings } from "./constants";
-import type { PerimeterShape } from "./perimeter";
+import type { Measure, PerimeterShape } from "./perimeter";
 
 /* ------------------------------------------------------------------ */
 /* Drawing                                                             */
@@ -86,14 +86,16 @@ export interface DrawOffResult {
   rank: number;
 }
 
-/** What one player sees of a Perimeter turn. */
+/** What one player sees of a Perimeter or Area turn. */
 export interface PerimeterView {
+  /** What the players work out: the perimeter, or the area (in square units). */
+  measure: Measure;
   /** The drawer's shape, once made (null while they build it). */
   shape: PerimeterShape | null;
   unit: "cm" | "m";
-  /** The correct perimeter: for the drawer, players who solved it, and at the reveal. */
+  /** The correct answer (may end in .5 for area): for the drawer, players who solved it, and at the reveal. */
   answer: number | null;
-  /** Worked answer at the reveal: "8 + 3 + 8 + 3 = 22 cm", a shortcut if there is one, and a note for composites. */
+  /** Worked answer at the reveal: "8 + 3 + 8 + 3 = 22 cm" or "8 × 3 = 24 cm²", a shortcut if there is one, and a note. */
   equation: { sum: string; shortcut: string | null; note: string | null } | null;
 }
 
@@ -225,7 +227,7 @@ export interface ClientToServerEvents {
   "drawoff:vote": (entryId: string, stars: number) => void;
   /** Draw-Off: the host ends the gallery early. */
   "drawoff:continue": () => void;
-  /** Perimeter: the drawer's finished shape. */
+  /** Perimeter and Area: the drawer's finished shape. */
   "perim:shape": (shape: PerimeterShape) => void;
   /** Perimeter: a player's answer. */
   "perim:answer": (value: number) => void;
@@ -248,7 +250,7 @@ export interface ServerToClientEvents {
   /** Draw-Off: every drawing of the round, sent once when voting starts. */
   "drawoff:entries": (entries: DrawOffEntry[]) => void;
   /** Perimeter: private feedback on your answer. */
-  "perim:feedback": (info: { result: "correct" | "close" | "wrong"; value: number }) => void;
+  "perim:feedback": (info: { result: "correct" | "close" | "wrong" | "mixup"; value: number }) => void;
 }
 
 export interface SocketData {

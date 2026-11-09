@@ -324,7 +324,7 @@ describe("Perimeter mode", () => {
   it("validates the teacher's settings", () => {
     let s = applySettingsPatch(DEFAULT_SETTINGS, { mode: "perimeter", perimeterMax: 37, perimeterUnit: "km", perimeterShapes: [], perimeterTime: 5 }, 1);
     expect(s).toMatchObject({ mode: "perimeter", perimeterMax: 20, perimeterUnit: "cm", perimeterTime: 20 });
-    expect(s.perimeterShapes).toHaveLength(7); // can't switch every shape off
+    expect(s.perimeterShapes).toHaveLength(9); // can't switch every shape off
     s = applySettingsPatch(s, { perimeterMax: 50, perimeterUnit: "m", perimeterShapes: ["square", "oval"], perimeterChallenge: true }, 1);
     expect(s).toMatchObject({ perimeterMax: 50, perimeterUnit: "m", perimeterShapes: ["square"], perimeterChallenge: true });
   });

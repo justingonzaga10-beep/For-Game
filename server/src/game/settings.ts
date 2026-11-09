@@ -1,7 +1,7 @@
 import { DEFAULT_SETTINGS, LIMITS, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_KINDS, isLanguage, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 
 const MODES: WordMode[] = ["normal", "hidden", "combination"];
-const GAME_MODE_IDS: GameModeId[] = ["guess", "drawoff", "perimeter"];
+const GAME_MODE_IDS: GameModeId[] = ["guess", "drawoff", "perimeter", "area"];
 
 function clampInt(v: unknown, [min, max]: readonly [number, number], fallback: number): number {
   const n = typeof v === "number" ? v : Number(v);

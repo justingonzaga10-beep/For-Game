@@ -71,7 +71,7 @@ export function App() {
 
   // Draw-Off phases, plus the final podium of a Draw-Off game.
   const isDrawOff = !!view && (view.phase.startsWith("drawoff_") || (view.phase === "podium" && view.settings.mode === "drawoff" && !view.isPublic));
-  const isPerimeter = !!view && (view.phase.startsWith("perim_") || (view.phase === "podium" && view.settings.mode === "perimeter" && !view.isPublic));
+  const isPerimeter = !!view && (view.phase.startsWith("perim_") || (view.phase === "podium" && (view.settings.mode === "perimeter" || view.settings.mode === "area") && !view.isPublic));
 
   if (!view) {
     return (

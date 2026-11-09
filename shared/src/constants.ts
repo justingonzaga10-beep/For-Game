@@ -45,11 +45,12 @@ export const TIMING = {
 } as const;
 
 /** "guess": one draws, the rest guess. "drawoff": everyone draws the same theme, then rates each other. */
-export type GameModeId = "guess" | "drawoff" | "perimeter";
+export type GameModeId = "guess" | "drawoff" | "perimeter" | "area";
 export const GAME_MODES: { id: GameModeId; label: string }[] = [
   { id: "guess", label: "Guessing" },
   { id: "drawoff", label: "Draw-Off" },
   { id: "perimeter", label: "Perimeter" },
+  { id: "area", label: "Area" },
 ];
 /** Draw-Off needs three players so everyone has at least two drawings to rate. */
 export const DRAWOFF_MIN_PLAYERS = 3;
@@ -105,7 +106,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   perimeterTime: 60,
   perimeterUnit: "cm",
   perimeterMax: 20,
-  perimeterShapes: ["rect", "square", "triangle", "lshape", "tshape", "ushape", "house"],
+  perimeterShapes: ["rect", "square", "triangle", "lshape", "tshape", "ushape", "house", "righttri", "househ"],
   perimeterChallenge: false,
 };
 

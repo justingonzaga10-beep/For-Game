@@ -43,6 +43,7 @@ export class Room implements RoomContext {
   private readonly guess: GuessMode;
   readonly drawOff: DrawOffMode;
   readonly perimeter: PerimeterMode;
+  readonly area: PerimeterMode;
   private mode: GameMode;
 
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -67,6 +68,7 @@ export class Room implements RoomContext {
     this.guess = new GuessMode(this);
     this.drawOff = new DrawOffMode(this);
     this.perimeter = new PerimeterMode(this);
+    this.area = new PerimeterMode(this, "area");
     this.mode = this.guess;
   }
 
@@ -184,6 +186,7 @@ export class Room implements RoomContext {
     if (this.isPublic) return this.guess;
     if (this.settings.mode === "drawoff") return this.drawOff;
     if (this.settings.mode === "perimeter") return this.perimeter;
+    if (this.settings.mode === "area") return this.area;
     return this.guess;
   }
 

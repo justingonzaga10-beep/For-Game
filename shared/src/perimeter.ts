@@ -13,11 +13,21 @@ import type { DrawAction } from "./types";
  *  - tshape:   [ledge, stemWidth, topHeight, stemHeight]   a bar on a centred stem; top width = 2 × ledge + stem
  *  - ushape:   [armWidth, gapWidth, height, baseHeight]   two arms on a base; total width = 2 × arm + gap
  *  - house:    [width, wallHeight, roofSide]   a rectangle with a triangle roof (both roof sides equal)
+ * Area mode uses height instead of slanted sides:
+ *  - righttri: [base, height]   a right triangle
+ *  - househ:   [width, wallHeight, roofHeight]   a house whose roof is given by its height
  */
-export type ShapeKind = "rect" | "square" | "triangle" | "lshape" | "tshape" | "ushape" | "house";
-export const BASIC_SHAPES: ShapeKind[] = ["rect", "square", "triangle"];
-export const COMPOSITE_SHAPES: ShapeKind[] = ["lshape", "tshape", "ushape", "house"];
-export const SHAPE_KINDS: ShapeKind[] = [...BASIC_SHAPES, ...COMPOSITE_SHAPES];
+export type ShapeKind = "rect" | "square" | "triangle" | "lshape" | "tshape" | "ushape" | "house" | "righttri" | "househ";
+export type Measure = "perimeter" | "area";
+/** Shapes offered in each mode, grouped as the lobby and builder show them. */
+export const MEASURE_SHAPES: Record<Measure, { basic: ShapeKind[]; composite: ShapeKind[] }> = {
+  perimeter: { basic: ["rect", "square", "triangle"], composite: ["lshape", "tshape", "ushape", "house"] },
+  area: { basic: ["rect", "square", "righttri"], composite: ["lshape", "tshape", "ushape", "househ"] },
+};
+export const kindsFor = (m: Measure): ShapeKind[] => [...MEASURE_SHAPES[m].basic, ...MEASURE_SHAPES[m].composite];
+export const BASIC_SHAPES: ShapeKind[] = MEASURE_SHAPES.perimeter.basic;
+export const COMPOSITE_SHAPES: ShapeKind[] = MEASURE_SHAPES.perimeter.composite;
+export const SHAPE_KINDS: ShapeKind[] = ["rect", "square", "triangle", "lshape", "tshape", "ushape", "house", "righttri", "househ"];
 export const SHAPE_LABELS: Record<ShapeKind, string> = {
   rect: "Rectangle",
   square: "Square",
@@ -26,6 +36,8 @@ export const SHAPE_LABELS: Record<ShapeKind, string> = {
   tshape: "T-shape",
   ushape: "U-shape",
   house: "House",
+  righttri: "Right triangle",
+  househ: "House",
 };
 /** Names of each number the drawer sets, in order. */
 export const SHAPE_PARAMS: Record<ShapeKind, string[]> = {
@@ -36,6 +48,8 @@ export const SHAPE_PARAMS: Record<ShapeKind, string[]> = {
   tshape: ["Ledge (each side)", "Stem width", "Top height", "Stem height"],
   ushape: ["Arm width", "Gap width", "Height", "Base height"],
   house: ["Width", "Wall height", "Roof side"],
+  righttri: ["Base", "Height"],
+  househ: ["Width", "Wall height", "Roof height"],
 };
 /** Shapes where the drawer may hide one measurement (it can be worked out from the others). */
 export const HIDEABLE: ShapeKind[] = ["rect", "lshape", "tshape", "ushape"];
@@ -71,6 +85,12 @@ export function edgeLengths(s: PerimeterShape): number[] {
     }
     case "house":
       return [a, b, c, c, b]; // bottom, right wall, right roof, left roof, left wall
+    case "righttri":
+      return [a, Math.hypot(a, b), b]; // base, slanted side, height
+    case "househ": {
+      const roof = Math.hypot(a / 2, c);
+      return [a, b, roof, roof, b];
+    }
   }
 }
 
@@ -78,7 +98,12 @@ export const perimeterOf = (s: PerimeterShape) => edgeLengths(s).reduce((x, y) =
 
 /** Which edges show a measurement: a square shows one (all sides are equal); the rest show all. */
 export function labelledEdges(s: PerimeterShape): boolean[] {
-  return edgeLengths(s).map((_, i) => (s.kind === "square" ? i === 0 : true));
+  return edgeLengths(s).map((_, i) => {
+    if (s.kind === "square") return i === 0;
+    if (s.kind === "righttri") return i !== 1; // the slanted side isn't needed for area
+    if (s.kind === "househ") return i !== 2 && i !== 3; // nor are the roof's slanted sides
+    return true;
+  });
 }
 
 /** Width and height of the whole shape, for the "rectangle around it" shortcut. */
@@ -129,6 +154,7 @@ export function shapeProblem(kind: ShapeKind, sides: number[], max: number): str
     if (d >= c) return "The base must be shorter than the height, so the gap has some depth.";
   }
   if (kind === "house" && 2 * c <= a) return "The roof sides are too short to meet. Each roof side must be more than half the width.";
+  if (kind === "househ" && a < 2) return "Make the house at least 2 wide.";
   return null;
 }
 
@@ -194,6 +220,10 @@ export function randomShape(kinds: ShapeKind[], max: number, rand: () => number 
       const width = n(2, top);
       return { kind, sides: [width, n(1, top), n(Math.floor(width / 2) + 1, top)], hidden: null };
     }
+    case "righttri":
+      return { kind, sides: [n(1, top), n(1, top)], hidden: null };
+    case "househ":
+      return { kind, sides: [n(2, top), n(1, top), n(1, top)], hidden: null };
   }
 }
 
@@ -241,15 +271,38 @@ function corners(s: PerimeterShape): Pt[] {
       const h = Math.sqrt(Math.max(0, c * c - (a / 2) ** 2));
       return [[0, 0], [a, 0], [a, b], [a / 2, b + h], [0, b]];
     }
+    case "righttri":
+      return [[0, 0], [a, 0], [0, b]];
+    case "househ":
+      return [[0, 0], [a, 0], [a, b], [a / 2, b + c], [0, b]];
   }
 }
 
 /** Lines inside a composite shape where its parts join (not part of the perimeter). */
 function insideLines(s: PerimeterShape): [Pt, Pt][] {
-  const [a, b, , d] = s.sides;
+  const [a, b, c, d] = s.sides;
   if (s.kind === "house") return [[[0, b], [a, b]]];
+  if (s.kind === "househ") return [[[0, b], [a, b]], [[a / 2, b], [a / 2, b + c]]]; // roof base, roof height
   if (s.kind === "tshape") return [[[a, d], [a + b, d]]];
   return [];
+}
+
+/** Extra measurements that aren't sides (a house roof's height), placed beside their line. */
+export function shapeExtraLabels(s: PerimeterShape): { at: Pt; length: number }[] {
+  if (s.kind !== "househ") return [];
+  const toScreen = layout(s);
+  const [a, b, c] = s.sides;
+  const mid = toScreen([a / 2, b + c / 2]);
+  return [{ at: [mid[0] + 48, mid[1]], length: c }];
+}
+
+/** A small square marking the right angle of a right triangle. */
+export function shapeRightAngle(s: PerimeterShape): Pt[] | null {
+  if (s.kind !== "righttri") return null;
+  const toScreen = layout(s);
+  const o = toScreen([0, 0]);
+  const k = 16;
+  return [[o[0], o[1] - k], [o[0] + k, o[1] - k], [o[0] + k, o[1]]];
 }
 
 /** Scales maths coordinates to the canvas, centred, with room around the shape for labels. */
@@ -317,6 +370,8 @@ export function shapeOutline(s: PerimeterShape): DrawAction[] {
   };
   if (s.kind === "square") edges.forEach(tick);
   if (s.kind === "house") [edges[2], edges[3]].forEach(tick); // the two equal roof sides
+  const corner = shapeRightAngle(s);
+  if (corner) out.push({ t: "stroke", color, size: 3, pts: corner.flatMap(([x, y]) => [x, y, 1]) });
   for (const [p, q] of shapeInsideLines(s)) {
     const len = Math.hypot(q[0] - p[0], q[1] - p[1]);
     const dash = 14;
@@ -335,8 +390,100 @@ export function shapeOutline(s: PerimeterShape): DrawAction[] {
   return out;
 }
 
-/** Reads a typed answer like "22", "22cm" or "22 m"; null if it isn't one. */
+/** Reads a typed answer like "22", "22cm", "12.5 cm²" or "40 square m"; null if it isn't one. */
 export function parseAnswer(text: string): number | null {
-  const m = text.trim().match(/^(\d{1,4})\s*(cm|m|centimet(?:er|re)s?|met(?:er|re)s?|units?)?\.?$/i);
-  return m ? Number(m[1]) : null;
+  const m = text
+    .trim()
+    .match(/^(\d{1,5}(?:[.,]\d)?)\s*(?:(?:sq(?:uare)?\.?\s*)?(?:cm|m|centimet(?:er|re)s?|met(?:er|re)s?|units?)(?:\s*(?:²|2|sq(?:uared)?))?|²)?\.?$/i);
+  return m ? Number(m[1].replace(",", ".")) : null;
+}
+
+/* ------------------------------------------------------------------ */
+/* Area                                                                */
+/* ------------------------------------------------------------------ */
+
+/** Area in square units; may end in .5 for triangles. */
+export function areaOf(s: PerimeterShape): number {
+  const [a, b, c, d] = s.sides;
+  switch (s.kind) {
+    case "rect":
+      return a * b;
+    case "square":
+      return a * a;
+    case "righttri":
+      return (a * b) / 2;
+    case "lshape":
+      return a * b - c * d;
+    case "tshape":
+      return (2 * a + b) * c + b * d;
+    case "ushape":
+      return (2 * a + b) * c - b * (c - d);
+    case "househ":
+      return a * b + (a * c) / 2;
+    case "triangle": {
+      const p = (a + b + c) / 2; // Heron's formula (not offered in Area mode)
+      return Math.sqrt(Math.max(0, p * (p - a) * (p - b) * (p - c)));
+    }
+    case "house":
+      return a * b + (a * Math.sqrt(Math.max(0, c * c - (a / 2) ** 2))) / 2;
+  }
+}
+
+/** The correct answer for a mode. */
+export const measureOf = (s: PerimeterShape, m: Measure) => (m === "area" ? areaOf(s) : perimeterOf(s));
+
+const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+/** The working for an area: "8 × 6 − 3 × 2 = 48 − 6 = 42 cm²", plus a note on how the shape was split. */
+export function areaEquation(s: PerimeterShape, unit: PerimeterUnit): { sum: string; shortcut: string | null; note: string | null } {
+  const [a, b, c, d] = s.sides;
+  const u = `${unit}²`;
+  const A = fmt(areaOf(s));
+  switch (s.kind) {
+    case "rect":
+      return { sum: `${a} × ${b} = ${A} ${u}`, shortcut: null, note: "Area of a rectangle = length × width." };
+    case "square":
+      return { sum: `${a} × ${a} = ${A} ${u}`, shortcut: null, note: "Area of a square = side × side." };
+    case "righttri":
+      return { sum: `½ × ${a} × ${b} = ${A} ${u}`, shortcut: null, note: "A right triangle is half of a rectangle: ½ × base × height." };
+    case "lshape":
+      return { sum: `${a} × ${b} − ${c} × ${d} = ${a * b} − ${c * d} = ${A} ${u}`, shortcut: null, note: "Take the cut-out corner away from the whole rectangle." };
+    case "tshape": {
+      const w = 2 * a + b;
+      return { sum: `${w} × ${c} + ${b} × ${d} = ${w * c} + ${b * d} = ${A} ${u}`, shortcut: null, note: "Split it into the top bar and the stem, then add them." };
+    }
+    case "ushape": {
+      const w = 2 * a + b;
+      return { sum: `${w} × ${c} − ${b} × ${c - d} = ${w * c} − ${b * (c - d)} = ${A} ${u}`, shortcut: null, note: "Take the gap away from the whole rectangle." };
+    }
+    case "househ":
+      return { sum: `${a} × ${b} + ½ × ${a} × ${c} = ${a * b} + ${fmt((a * c) / 2)} = ${A} ${u}`, shortcut: null, note: "Add the rectangle and the triangle roof (½ × width × height)." };
+    default:
+      return { sum: `${A} ${u}`, shortcut: null, note: null };
+  }
+}
+
+/** The parts the reveal shades: added parts (+1) and taken-away parts (−1), on the canvas. */
+export function shapeAreaParts(s: PerimeterShape): { pts: Pt[]; sign: 1 | -1 }[] {
+  const toScreen = layout(s);
+  const [a, b, c, d] = s.sides;
+  const box = (x0: number, y0: number, x1: number, y1: number): Pt[] => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  const parts: { pts: Pt[]; sign: 1 | -1 }[] = [];
+  switch (s.kind) {
+    case "lshape":
+      parts.push({ pts: box(0, 0, a, b), sign: 1 }, { pts: box(a - c, b - d, a, b), sign: -1 });
+      break;
+    case "tshape":
+      parts.push({ pts: box(0, d, 2 * a + b, d + c), sign: 1 }, { pts: box(a, 0, a + b, d), sign: 1 });
+      break;
+    case "ushape":
+      parts.push({ pts: box(0, 0, 2 * a + b, c), sign: 1 }, { pts: box(a, d, a + b, c), sign: -1 });
+      break;
+    case "househ":
+      parts.push({ pts: box(0, 0, a, b), sign: 1 }, { pts: [[0, b], [a, b], [a / 2, b + c]], sign: 1 });
+      break;
+    default:
+      parts.push({ pts: corners(s), sign: 1 });
+  }
+  return parts.map((p) => ({ sign: p.sign, pts: p.pts.map(toScreen) }));
 }

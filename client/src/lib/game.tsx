@@ -6,7 +6,7 @@ import { socket } from "./socket";
 export type FxListener = (fx: { playerId: string; points: number }) => void;
 /** Perimeter: the server's private verdict on your last answer. `n` counts answers so repeats re-render. */
 export interface PerimFeedback {
-  result: "correct" | "close" | "wrong";
+  result: "correct" | "close" | "wrong" | "mixup";
   value: number;
   n: number;
 }

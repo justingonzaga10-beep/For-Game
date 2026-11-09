@@ -488,7 +488,7 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 /* Draw-Off                                                            */
 /* ------------------------------------------------------------------ */
 /* Lobby mode picker */
-.mode-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mode-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .shape-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 999px; border: 1.5px solid rgba(var(--gold-rgb), 0.35); background: rgba(var(--inset-rgb), 0.6); color: var(--muted); font-size: 14px; font-weight: 600; cursor: pointer; text-transform: none; letter-spacing: 0; }
 .chip input { accent-color: var(--pink); }
@@ -631,6 +631,11 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .shape-labels text.unknown, .shape-labels text.found { fill: #c0236f; }
 .shape-labels text.extra { font-size: 24px; fill: #6c6873; }
 .shape-labels.editable text { pointer-events: auto; cursor: pointer; }
+.shape-labels text.inner { font-size: 24px; fill: #6c6873; }
+.area-part { opacity: 0; animation: area-part 0.6s ease-out forwards; stroke-width: 3; }
+.area-part.add { fill: rgba(242, 183, 5, 0.45); stroke: #d49a00; }
+.area-part.take { fill: rgba(192, 35, 111, 0.35); stroke: #c0236f; stroke-dasharray: 10 8; }
+@keyframes area-part { to { opacity: 1; } }
 .shape-labels.editable text:hover { fill: #c0236f; }
 .shape-labels text.label-pop { animation: label-pop 0.45s ease-out both; }
 @keyframes label-pop { 0% { opacity: 0.35; transform: scale(0.6); } 60% { transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
@@ -671,6 +676,12 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 .key:active:not(:disabled) { transform: translateY(1px); }
 .key.go { background: linear-gradient(180deg, #8fd14f, #5aa52a); color: #fff; border-color: transparent; }
 .key:disabled { opacity: 0.4; }
+/* Area adds a decimal point: 1-9 with ⌫ on the right, ". 0" below, and a tall ✓. */
+.numpad-keys.area { grid-template-columns: repeat(4, 58px); }
+.numpad-keys.area .k-del { grid-column: 4; grid-row: 1; }
+.numpad-keys.area .k-dot { grid-column: 1; grid-row: 4; }
+.numpad-keys.area .k-0 { grid-column: 2 / span 2; grid-row: 4; }
+.numpad-keys.area .go { grid-column: 4; grid-row: 2 / span 3; height: auto; }
 
 .reveal-panel { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .reveal-panel .reason { margin: 0; font-family: var(--f-pixel); font-size: 10px; color: var(--yellow); }
@@ -695,7 +706,6 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
   .swatch { width: 20px; height: 20px; }
 }
 @media (max-width: 900px) {
-  .mode-cards { grid-template-columns: minmax(0, 1fr); }
   .game.narrow { display: flex; flex-direction: column; gap: 10px; height: auto; }
   .game.narrow .canvas-frame { width: 100%; }
   /* Word and timer stay in view while the page scrolls on phones. */
@@ -709,8 +719,8 @@ fieldset:disabled select, fieldset:disabled textarea, fieldset:disabled input { 
 @media (max-width: 560px) {
   .numpad { flex-direction: column; }
   .numpad-keys { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .numpad-keys.area { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .key { height: 50px; }
-  .mode-cards { grid-template-columns: minmax(0, 1fr); }
   .mode-cards { grid-template-columns: minmax(0, 1fr); }
   .star { width: 48px; height: 48px; font-size: 26px; }
   .do-podium { grid-template-columns: minmax(0, 1fr); }
