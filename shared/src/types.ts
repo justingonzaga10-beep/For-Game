@@ -233,6 +233,8 @@ export interface ClientToServerEvents {
   "perim:answer": (value: number) => void;
   /** Tap an emoji reaction (one from the current mode's set). */
   react: (emoji: string) => void;
+  /** Throw paint (one of THROW_COLORS) at another player. */
+  "paint:throw": (targetId: string, color: string) => void;
 }
 
 export interface ServerToClientEvents {
@@ -246,6 +248,8 @@ export interface ServerToClientEvents {
   "fx:guessed": (info: { playerId: string; points: number }) => void;
   /** Someone tapped an emoji reaction: it floats up on everyone's screen. */
   "fx:react": (info: { playerId: string; emoji: string }) => void;
+  /** Someone threw paint at someone: it flies across and splats. */
+  "fx:paint": (info: { from: string; to: string; color: string }) => void;
   /** You were removed from the room. */
   "room:removed": (info: { reason: "kicked" | "banned" | "votekicked" }) => void;
   notice: (text: string) => void;

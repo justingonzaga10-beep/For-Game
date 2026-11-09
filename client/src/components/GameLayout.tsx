@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useGame } from "../lib/game";
 import { Chat } from "./Chat";
+import { PaintLayer } from "./Paint";
 import { ReactionBar, ReactionLayer } from "./Reactions";
 import { Scoreboard } from "./Scoreboard";
 
@@ -43,6 +44,7 @@ export function GameLayout({ board }: { board: ReactNode }) {
         {board}
         <ReactionBar />
         <ReactionLayer />
+        <PaintLayer />
         <div className="tabs" role="tablist">
           <button role="tab" type="button" aria-selected={tab === "chat"} className={tab === "chat" ? "on" : ""} onClick={() => setTab("chat")}>
             Chat {unread > 0 && <span className="badge">{unread > 99 ? "99+" : unread}</span>}
@@ -71,6 +73,7 @@ export function GameLayout({ board }: { board: ReactNode }) {
         <Chat autoFocus />
       </aside>
       <ReactionLayer />
+      <PaintLayer />
     </div>
   );
 }

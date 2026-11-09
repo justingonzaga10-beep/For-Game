@@ -1,6 +1,7 @@
 import {
   LIMITS,
   TIMING,
+  THROW_COLORS,
   reactionsFor,
   sanitizeText,
   type ChatKind,
@@ -125,6 +126,7 @@ export class Room implements RoomContext {
       chatLimit: new TokenBucket(6, 1.5),
       drawLimit: new TokenBucket(80, 45),
       reactLimit: new TokenBucket(4, 1),
+      throwLimit: new TokenBucket(2, 1 / 3),
     };
     this.players.set(p.id, p);
     if (!this.isPublic && !this.hostId) this.hostId = p.id;
@@ -141,6 +143,7 @@ export class Room implements RoomContext {
     if (!p) return;
     this.players.delete(id);
     this.kickVotes.delete(id);
+    this.paintHits.delete(id);
     for (const voters of this.kickVotes.values()) voters.delete(id);
     if (this.inGame && reason === "left") {
       const data = this.mode.ghostData(p);
@@ -319,6 +322,32 @@ export class Room implements RoomContext {
     if (!reactionsFor(this.settings.mode, this.isPublic).includes(emoji)) return;
     if (!p.reactLimit.take()) return; // spam is dropped quietly
     this.io.broadcast("fx:react", [{ playerId: byId, emoji }]);
+  }
+
+  /** When each player was last hit by paint, so nobody gets buried in it. */
+  private paintHits = new Map<string, number>();
+
+  /**
+   * Throw paint at another player, during a game. Two quick throws, then one
+   * every 3 seconds; and each player can be hit at most once every 2.5 seconds.
+   * Extra throws are dropped, with a short note to the thrower.
+   */
+  throwPaint(byId: string, targetId: unknown, color: unknown): void {
+    const p = this.players.get(byId);
+    if (!p || this.phase === "lobby" || !this.settings.paintThrow) return;
+    if (typeof targetId !== "string" || targetId === byId || !this.players.has(targetId)) return;
+    if (typeof color !== "string" || !(THROW_COLORS as readonly string[]).includes(color)) return;
+    const now = Date.now();
+    if (now - (this.paintHits.get(targetId) ?? 0) < 2500) {
+      this.io.send(byId, "notice", `${this.players.get(targetId)!.name} just got splatted! Try again in a moment.`);
+      return;
+    }
+    if (!p.throwLimit.take()) {
+      this.io.send(byId, "notice", "Your paint is drying… wait a few seconds.");
+      return;
+    }
+    this.paintHits.set(targetId, now);
+    this.io.broadcast("fx:paint", [{ from: byId, to: targetId, color }]);
   }
 
   /* ---------------------------------------------------------------- */

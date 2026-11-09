@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import type { PlayerView, RoomView } from "@inkwave/shared";
+import { THROW_COLORS, type PlayerView, type RoomView } from "@inkwave/shared";
 import { useGame } from "../lib/game";
 import { toggleMute, useMuted } from "../lib/muted";
 
-/** The "⋯" menu next to another player: mute, vote-kick, and host kick/ban. */
+/** The "⋯" menu next to another player: throw paint, mute, vote-kick, and host kick/ban. */
 export function PlayerActions({ player, view }: { player: PlayerView; view: RoomView }) {
   const g = useGame();
   const muted = useMuted();
@@ -29,6 +29,7 @@ export function PlayerActions({ player, view }: { player: PlayerView; view: Room
   const isHost = view.hostId === view.you && !view.isPublic;
   const voted = view.yourKickVotes.includes(player.id);
   const canVote = view.players.length >= 3;
+  const canThrow = view.settings.paintThrow && view.phase !== "lobby";
 
   return (
     <div className="pmenu" ref={ref}>
@@ -46,6 +47,27 @@ export function PlayerActions({ player, view }: { player: PlayerView; view: Room
       </button>
       {open && (
         <div className="pmenu-list" role="menu">
+          {canThrow && (
+            <div className="throw-paint">
+              <span>Throw paint 🎨</span>
+              <div className="throw-colors">
+                {THROW_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    role="menuitem"
+                    className="throw-color"
+                    style={{ background: c }}
+                    aria-label={`Throw ${c} paint at ${player.name}`}
+                    onClick={() => {
+                      g.throwPaint(player.id, c);
+                      setOpen(false);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           <button role="menuitem" type="button" onClick={() => toggleMute(player.id)}>
             {muted.has(player.id) ? "Unmute chat" : "Mute chat"}
           </button>

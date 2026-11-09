@@ -5,6 +5,7 @@ import { socket } from "./socket";
 
 export type FxListener = (fx: { playerId: string; points: number }) => void;
 export type ReactListener = (r: { playerId: string; emoji: string }) => void;
+export type PaintListener = (p: { from: string; to: string; color: string }) => void;
 /** Perimeter: the server's private verdict on your last answer. `n` counts answers so repeats re-render. */
 export interface PerimFeedback {
   result: "correct" | "close" | "wrong" | "mixup";
@@ -51,6 +52,10 @@ interface GameApi {
   react: (emoji: string) => void;
   /** Listen for everyone's emoji reactions (yours included, once the server relays it). */
   onReact: (l: ReactListener) => () => void;
+  /** Throw paint at another player. */
+  throwPaint: (to: string, color: string) => void;
+  /** Listen for paint throws (anyone at anyone). */
+  onPaint: (l: PaintListener) => () => void;
   clearRemoved: () => void;
 }
 
@@ -71,6 +76,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const lastView = useRef<RoomView | null>(null);
   const fx = useRef(new Set<FxListener>());
   const reacts = useRef(new Set<ReactListener>());
+  const paints = useRef(new Set<PaintListener>());
   const roomCode = useRef<string | null>(null);
   /** Where to rejoin after a dropped connection (wifi blip, server restart). */
   const lastRoom = useRef<{ code: string; profile: Profile } | null>(null);
@@ -95,6 +101,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const onPerimFeedback = (f: { result: PerimFeedback["result"]; value: number }) => setPerimFeedback((old) => ({ ...f, n: (old?.n ?? 0) + 1 }));
     const onFx = (f: { playerId: string; points: number }) => fx.current.forEach((l) => l(f));
     const onReact = (r: { playerId: string; emoji: string }) => reacts.current.forEach((l) => l(r));
+    const onPaint = (p: { from: string; to: string; color: string }) => paints.current.forEach((l) => l(p));
     const onRemoved = ({ reason }: { reason: Removal }) => {
       roomCode.current = null;
       lastRoom.current = null;
@@ -128,6 +135,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     socket.on("draw:replay", onReplay);
     socket.on("fx:guessed", onFx);
     socket.on("fx:react", onReact);
+    socket.on("fx:paint", onPaint);
     socket.on("room:removed", onRemoved);
     socket.on("notice", onNotice);
     socket.on("drawoff:canvas", onDrawOffCanvas);
@@ -142,6 +150,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       socket.off("draw:replay", onReplay);
       socket.off("fx:guessed", onFx);
       socket.off("fx:react", onReact);
+      socket.off("fx:paint", onPaint);
       socket.off("room:removed", onRemoved);
       socket.off("notice", onNotice);
       socket.off("drawoff:canvas", onDrawOffCanvas);
@@ -234,6 +243,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     onReact: (l) => {
       reacts.current.add(l);
       return () => reacts.current.delete(l);
+    },
+    throwPaint: (to, color) => socket.emit("paint:throw", to, color),
+    onPaint: (l) => {
+      paints.current.add(l);
+      return () => paints.current.delete(l);
     },
     clearRemoved: () => setRemoved(null),
   };

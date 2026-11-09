@@ -172,6 +172,7 @@ io.on("connection", (socket) => {
   socket.on("perim:shape", guard((shape) => roomOf(socket)?.submitShape(socket.id, shape)));
   socket.on("perim:answer", guard((value) => roomOf(socket)?.answer(socket.id, value)));
   socket.on("react", guard((emoji) => roomOf(socket)?.react(socket.id, emoji)));
+  socket.on("paint:throw", guard((to, color) => roomOf(socket)?.throwPaint(socket.id, to, color)));
   socket.on("disconnect", () => leaveRoom(socket));
 });
 

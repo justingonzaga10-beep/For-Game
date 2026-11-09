@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
+import { FLIGHT_MS, Splat } from "./Paint";
 import { PlayerActions } from "./PlayerActions";
 
 /** Live ranking with drawing/guessed state and "+points" pops. */
@@ -12,6 +13,18 @@ export function Scoreboard() {
   const [pops, setPops] = useState<Record<string, { pts: number; key: number }>>({});
   // The latest emoji each player sent, shown by their name for a moment.
   const [bubbles, setBubbles] = useState<Record<string, { emoji: string; key: number }>>({});
+  // Paint thrown at a player: a splat on their avatar for everyone to see.
+  const [splats, setSplats] = useState<Record<string, { color: string; key: number; from: string }>>({});
+
+  useEffect(
+    () =>
+      g.onPaint(({ from, to, color }) => {
+        const key = Date.now() + Math.random();
+        setTimeout(() => setSplats((s) => ({ ...s, [to]: { color, key, from } })), FLIGHT_MS);
+        setTimeout(() => setSplats((s) => (s[to]?.key === key ? (({ [to]: _, ...rest }) => rest)(s) : s)), FLIGHT_MS + 4000);
+      }),
+    [g],
+  );
 
   useEffect(
     () =>
@@ -53,10 +66,13 @@ export function Scoreboard() {
         if (i === 0 || p.score !== sorted[i - 1].score) rank = i + 1;
         const drawing = p.id === view.drawerId && (view.phase === "drawing" || view.phase === "choosing");
         return (
-          <li key={p.id} className={`${p.id === view.you ? "me" : ""} ${p.guessed ? "guessed" : ""} ${drawing ? "drawing" : ""}`}>
+          <li key={p.id} data-player-id={p.id} className={`${p.id === view.you ? "me" : ""} ${p.guessed ? "guessed" : ""} ${drawing ? "drawing" : ""}`}>
             <span className="rank">#{rank}</span>
             <span className="avatar-slot">
               <Avatar avatar={p.avatar} size={38} />
+              {splats[p.id] && !muted.has(splats[p.id].from) && (
+                <Splat key={splats[p.id].key} className="avatar-splat" color={splats[p.id].color} seed={Math.floor(splats[p.id].key)} />
+              )}
               {bubbles[p.id] && !muted.has(p.id) && (
                 <span className="react-bubble" key={bubbles[p.id].key} aria-hidden="true">
                   {bubbles[p.id].emoji}

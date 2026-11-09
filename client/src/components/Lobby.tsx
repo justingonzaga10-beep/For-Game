@@ -182,6 +182,13 @@ export function Lobby() {
               ))}
             </select>
           </Field>
+          <div className="field">
+            <span>Fun</span>
+            <label className="check paint-toggle">
+              <input id="set-paint" type="checkbox" checked={s.paintThrow} onChange={(e) => set({ paintThrow: e.target.checked })} />
+              Paint throwing 🎨
+            </label>
+          </div>
           {isDrawOff && (
             <Field label="Draw time">
               <select id="set-drawoff-time" value={s.drawOffTime} onChange={(e) => set({ drawOffTime: +e.target.value })}>

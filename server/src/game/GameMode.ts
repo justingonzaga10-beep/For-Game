@@ -24,6 +24,7 @@ export interface Player {
   chatLimit: TokenBucket;
   drawLimit: TokenBucket;
   reactLimit: TokenBucket;
+  throwLimit: TokenBucket;
 }
 
 export interface NewPlayer {

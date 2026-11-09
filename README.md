@@ -170,6 +170,18 @@ During a game (in every mode), a row of emoji buttons sits above the chat (below
 
 The server only relays emojis from the current mode's set (so nothing else can be sent), and each player can send 4 in a row, then about one a second; the buttons dim briefly when you hit the limit. Reactions from a player you muted are hidden. The sets live in `shared/src/reactions.ts`.
 
+### Paint throwing
+
+During a game, open another player's **⋯** menu (in the player list) and pick a colour under **Throw paint 🎨**. A blob of paint flies from your row to theirs and splats on their picture for everyone to see. On their own screen a big splat lands near the edge with drips and *"Ben threw paint at you!"*, then fades after about 4 seconds. Splats never cover the middle of the canvas and never block clicks.
+
+To keep it fun and not disruptive:
+
+- Each player can throw 2 quickly, then about one every 3 seconds ("Your paint is drying…").
+- Each player can be hit at most once every 2.5 seconds ("Ben just got splatted! Try again in a moment.").
+- Only the eight paint colours can be thrown, and only at players in the room, during a game.
+- Muting a player also hides their paint.
+- The host can switch it off in the lobby (**Fun: Paint throwing 🎨**). It's on by default.
+
 ### Moderation and safety
 
 - The host of a private room can kick or ban players. Bans cover the player's browser id and IP for that room.
@@ -209,6 +221,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/perimeter.cjs`: three players (one on a phone-sized screen) play a 2-round Perimeter game. Checks the settings, the builder (hiding a measurement, rejecting an impossible triangle), private feedback for wrong, close and right answers, answering in chat, the drawer's fill, the reveal's working, turn order, and the return to the lobby
 - `e2e/area.cjs`: three players (one on a phone-sized screen) play a 2-round Area game. Checks Area's own shapes, the perimeter mix-up hint, close and right answers, answering in chat, shaded parts and step-by-step working at the reveal, a 7.5 answer on the decimal keypad, the house's roof height, and the return to the lobby
 - `e2e/brushes.cjs`: the drawer uses every brush texture; checks that each looks right (soft is see-through, spray, hatch and crayon leave gaps) and that the other player, and a player who joins late, see exactly the same pixels, before and after undo
+- `e2e/paint.cjs`: the host's on/off switch, throwing paint from the player menu, the target's splat and the splat on their picture, the 2.5-second protection, splats not blocking clicks, and splats fading
 - `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).

@@ -96,6 +96,11 @@ export const sfx = {
     note(N.C4, 0, 0.8, "triangle", 0.2);
   },
   click: () => note(900, 0, 0.03, "square", 0.08),
+  /** A wet "splat" for thrown paint. */
+  splat: () => {
+    note(220, 0, 0.09, "sawtooth", 0.08);
+    note(120, 0.03, 0.14, "triangle", 0.18);
+  },
   /** A soft bubble pop for emoji reactions. */
   react: () => {
     note(N.G5, 0, 0.05, "sine", 0.08);

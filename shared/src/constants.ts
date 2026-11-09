@@ -68,6 +68,8 @@ export interface RoomSettings {
   language: LanguageCode;
   customWords: string;
   customOnly: boolean;
+  /** Players may throw paint at each other (a splat that fades; the host can turn it off). */
+  paintThrow: boolean;
   /** Draw-Off drawing time in seconds. */
   drawOffTime: number;
   /** Perimeter: answering time in seconds. */
@@ -102,6 +104,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   language: "en",
   customWords: "",
   customOnly: false,
+  paintThrow: true,
   drawOffTime: 90,
   perimeterTime: 60,
   perimeterUnit: "cm",
