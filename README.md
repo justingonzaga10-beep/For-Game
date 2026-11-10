@@ -157,6 +157,14 @@ Next to the drawing tools is a row of brush textures, for shading and adding tex
 
 The texture is sent with each stroke, and the spray's "random" dots come from a seed taken from the stroke itself, so every player, a late joiner, undo and the Draw-Off gallery all show exactly the same pixels. The eraser always erases solidly.
 
+### Open rooms
+
+The start page lists private rooms that are waiting to start, newest first: the host's name and avatar, the game mode, how many players have joined, and how long ago the room was made. Students tap **Join** instead of typing a code. A room leaves the list when its game starts, when it is full, or when it closes.
+
+- The host can hide a room with **Open rooms: Show on the start page** in the lobby (it's on by default), to keep it invite-only.
+- Public quick-play rooms are never listed.
+- It costs nothing extra on Render's free plan: the list is built from the rooms already in memory, rebuilt at most once a second, and the start page only refreshes it (every 6 seconds) while it is open and on screen.
+
 ### Emoji reactions
 
 During a game (in every mode), a row of emoji buttons sits above the chat (below the board on phones). Tap one and it floats up over the board with your name on everyone's screen, and pops up by your name in the player list. Each mode has its own set of eight:
@@ -222,6 +230,7 @@ BASE=http://localhost:3001 npm run e2e
 - `e2e/area.cjs`: three players (one on a phone-sized screen) play a 2-round Area game. Checks Area's own shapes, the perimeter mix-up hint, close and right answers, answering in chat, shaded parts and step-by-step working at the reveal, a 7.5 answer on the decimal keypad, the house's roof height, and the return to the lobby
 - `e2e/brushes.cjs`: the drawer uses every brush texture; checks that each looks right (soft is see-through, spray, hatch and crayon leave gaps) and that the other player, and a player who joins late, see exactly the same pixels, before and after undo
 - `e2e/paint.cjs`: the host's on/off switch, throwing paint from the player menu, the target's splat and the splat on their picture, the 2.5-second protection, splats not blocking clicks, and splats fading
+- `e2e/open-rooms.cjs`: a new room appears on another player's start page, Join puts them in the lobby, the player count updates, and the room leaves the list when the host hides it or the game starts
 - `e2e/drawoff.cjs`: four players (one on a phone-sized screen) play a 2-round Draw-Off with a mid-round joiner. Checks the 3-player minimum, the shared theme, private canvases, blank submissions, voting, ratings, the podium, the gallery and lightbox, host-only skip, and the return to the lobby
 
 Screenshots go to `e2e/screens/` (set `SHOTS` to change it).

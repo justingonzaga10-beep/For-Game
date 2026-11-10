@@ -70,6 +70,8 @@ export interface RoomSettings {
   customOnly: boolean;
   /** Players may throw paint at each other (a splat that fades; the host can turn it off). */
   paintThrow: boolean;
+  /** Private rooms: show this room in the "Open rooms" list on the start page while it waits in the lobby. */
+  listed: boolean;
   /** Draw-Off drawing time in seconds. */
   drawOffTime: number;
   /** Perimeter: answering time in seconds. */
@@ -105,6 +107,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   customWords: "",
   customOnly: false,
   paintThrow: true,
+  listed: true,
   drawOffTime: 90,
   perimeterTime: 60,
   perimeterUnit: "cm",

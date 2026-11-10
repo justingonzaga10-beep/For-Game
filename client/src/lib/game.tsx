@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { ChatMessage, DrawAction, DrawOffEntry, DrawOp, JoinResult, PerimeterShape, Profile, RoomSettings, RoomView } from "@inkwave/shared";
+import type { ChatMessage, DrawAction, DrawOffEntry, DrawOp, JoinResult, OpenRoom, PerimeterShape, Profile, RoomSettings, RoomView } from "@inkwave/shared";
 import { CanvasLog } from "../canvas/canvasLog";
 import { socket } from "./socket";
 
@@ -30,6 +30,8 @@ interface GameApi {
   quickplay: (p: Profile) => Promise<JoinResult>;
   create: (p: Profile) => Promise<JoinResult>;
   join: (code: string, p: Profile) => Promise<JoinResult>;
+  /** Private rooms waiting in their lobby (for the start page). */
+  listRooms: () => Promise<OpenRoom[]>;
   leave: () => void;
   updateSettings: (patch: Partial<RoomSettings>) => void;
   start: () => void;
@@ -205,6 +207,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setChat([]);
       return enter(ack<JoinResult>((cb) => socket.emit("room:join", code, p, cb)), p);
     },
+    listRooms: () =>
+      new Promise<OpenRoom[]>((resolve) => {
+        const t = setTimeout(() => resolve([]), 6000);
+        socket.emit("rooms:list", (list) => {
+          clearTimeout(t);
+          resolve(Array.isArray(list) ? list : []);
+        });
+      }),
     leave: () => {
       socket.emit("room:leave");
       lastRoom.current = null;

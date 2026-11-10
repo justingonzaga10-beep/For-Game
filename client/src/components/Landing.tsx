@@ -17,6 +17,7 @@ import { Avatar } from "./Avatar";
 import { BrandShield } from "./BrandShield";
 import { HowToPlayButton } from "./HowToPlay";
 import { Logo } from "./Logo";
+import { OpenRooms } from "./OpenRooms";
 
 const PARTS: { key: Exclude<keyof AvatarData, "color">; label: string }[] = [
   { key: "head", label: "Head" },
@@ -44,7 +45,8 @@ export function loadProfile(): Profile {
 export function Landing({ joinCode, onEntered }: { joinCode?: string; onEntered: (code: string) => void }) {
   const g = useGame();
   const [profile, setProfile] = useState<Profile>(loadProfile);
-  const [busy, setBusy] = useState<"" | "play" | "create" | "join">("");
+  /** What is in progress: quick play, creating, joining the linked room, or a room code picked from the list. */
+  const [busy, setBusy] = useState<string>("");
   const [error, setError] = useState("");
 
   const update = (patch: Partial<Profile>) => {
@@ -57,13 +59,13 @@ export function Landing({ joinCode, onEntered }: { joinCode?: string; onEntered:
     update({ avatar: { ...profile.avatar, [key]: (profile.avatar[key] + dir + n) % n } });
   };
 
-  const go = async (kind: "play" | "create" | "join") => {
+  const go = async (kind: "play" | "create" | "join", code = joinCode) => {
     if (busy) return;
-    setBusy(kind);
+    setBusy(kind === "join" && code !== joinCode ? code! : kind);
     setError("");
     g.clearRemoved();
     const p = { ...profile, name: profile.name.trim() };
-    const res: JoinResult = kind === "play" ? await g.quickplay(p) : kind === "create" ? await g.create(p) : await g.join(joinCode!, p);
+    const res: JoinResult = kind === "play" ? await g.quickplay(p) : kind === "create" ? await g.create(p) : await g.join(code!, p);
     setBusy("");
     if (res.ok) onEntered(res.code);
     else setError(res.error);
@@ -176,6 +178,8 @@ export function Landing({ joinCode, onEntered }: { joinCode?: string; onEntered:
           </div>
         </div>
       </form>
+
+      {!joinCode && <OpenRooms busy={busy} onJoin={(code) => go("join", code)} />}
 
       <div className="howto-cta">
         <HowToPlayButton className="btn secondary" label="Watch how to play" />

@@ -1,5 +1,5 @@
 import type { Avatar } from "./avatar";
-import type { BrushKind, LanguageCode, RoomSettings } from "./constants";
+import type { BrushKind, GameModeId, LanguageCode, RoomSettings } from "./constants";
 import type { Measure, PerimeterShape } from "./perimeter";
 
 /* ------------------------------------------------------------------ */
@@ -207,11 +207,25 @@ export interface ChatMessage {
 /* Socket events                                                       */
 /* ------------------------------------------------------------------ */
 
+/** A private room waiting in its lobby, as listed on the start page. */
+export interface OpenRoom {
+  code: string;
+  hostName: string;
+  hostAvatar: Avatar;
+  mode: GameModeId;
+  players: number;
+  maxPlayers: number;
+  /** Seconds since the room was created. */
+  age: number;
+}
+
 export type JoinResult = { ok: true; code: string } | { ok: false; error: string };
 export type Ack<T> = (result: T) => void;
 
 export interface ClientToServerEvents {
   "room:quickplay": (profile: Profile, ack: Ack<JoinResult>) => void;
+  /** Private rooms waiting in their lobby, newest first. */
+  "rooms:list": (ack: Ack<OpenRoom[]>) => void;
   "room:create": (profile: Profile, ack: Ack<JoinResult>) => void;
   "room:join": (code: string, profile: Profile, ack: Ack<JoinResult>) => void;
   "room:leave": () => void;

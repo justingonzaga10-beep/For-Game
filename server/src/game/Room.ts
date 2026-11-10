@@ -46,6 +46,7 @@ export class Room implements RoomContext {
   readonly drawOff: DrawOffMode;
   readonly perimeter: PerimeterMode;
   readonly area: PerimeterMode;
+  readonly createdAt: number;
   private mode: GameMode;
 
   private timers: ReturnType<typeof setTimeout>[] = [];
@@ -66,6 +67,7 @@ export class Room implements RoomContext {
     private readonly onEmpty: (room: Room) => void = () => {},
     readonly rand: () => number = Math.random,
   ) {
+    this.createdAt = Date.now();
     this.settings = { ...settings };
     this.guess = new GuessMode(this);
     this.drawOff = new DrawOffMode(this);

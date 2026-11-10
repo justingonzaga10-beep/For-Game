@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, ROOM_CODE_ALPHABET, normalizeRoomCode, type LanguageCode } from "@inkwave/shared";
+import { DEFAULT_SETTINGS, ROOM_CODE_ALPHABET, normalizeRoomCode, type LanguageCode, type OpenRoom } from "@inkwave/shared";
 import { Room, type RoomTransport } from "./Room";
 import { publicSettings } from "./settings";
 
@@ -37,6 +37,29 @@ export class RoomManager {
       if (!best || room.players.size > best.players.size) best = room;
     }
     return best ?? this.create(true, language);
+  }
+
+  /**
+   * Private rooms waiting in their lobby with space left, newest first, for the
+   * start page. A host can hide their room with the "listed" setting.
+   */
+  listOpen(limit = 20, now = Date.now()): OpenRoom[] {
+    const out: OpenRoom[] = [];
+    for (const r of this.rooms.values()) {
+      if (r.isPublic || r.phase !== "lobby" || !r.settings.listed || r.isFull()) continue;
+      const host = r.hostId ? r.players.get(r.hostId) : undefined;
+      if (!host) continue;
+      out.push({
+        code: r.code,
+        hostName: host.name,
+        hostAvatar: host.avatar,
+        mode: r.settings.mode,
+        players: r.players.size,
+        maxPlayers: r.settings.maxPlayers,
+        age: Math.max(0, Math.round((now - r.createdAt) / 1000)),
+      });
+    }
+    return out.sort((a, b) => a.age - b.age).slice(0, limit);
   }
 
   stats() {

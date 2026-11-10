@@ -12,6 +12,7 @@ import {
   sanitizeText,
   type ClientToServerEvents,
   type JoinResult,
+  type OpenRoom,
   type Profile,
   type ServerToClientEvents,
   type SocketData,
@@ -40,6 +41,8 @@ const io: IO = new Server(http, {
   cors: process.env.CORS_ORIGIN ? { origin: process.env.CORS_ORIGIN.split(",") } : undefined,
 });
 
+/** The open-rooms list, rebuilt at most once a second however many start pages ask. */
+const openRoomsCache: { at: number; list: OpenRoom[] } = { at: 0, list: [] };
 const manager = new RoomManager((code) => ({
   send: (playerId, event, ...args) => io.to(playerId).emit(event, ...args),
   broadcast: (event, args, except) => (except ? io.to(code).except(except) : io.to(code)).emit(event, ...args),
@@ -158,6 +161,18 @@ io.on("connection", (socket) => {
     }),
   );
 
+  socket.on(
+    "rooms:list",
+    guard((ack) => {
+      // Cheap: built from rooms already in memory, and shared by everyone for a second.
+      const now = Date.now();
+      if (now - openRoomsCache.at > 1000) {
+        openRoomsCache.list = manager.listOpen(20, now);
+        openRoomsCache.at = now;
+      }
+      safeAck<OpenRoom[]>(ack)(openRoomsCache.list);
+    }),
+  );
   socket.on("room:leave", guard(() => leaveRoom(socket)));
   socket.on("room:settings", guard((patch) => roomOf(socket)?.updateSettings(socket.id, patch)));
   socket.on("game:start", guard(() => roomOf(socket)?.requestStart(socket.id)));

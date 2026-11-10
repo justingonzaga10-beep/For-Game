@@ -26,6 +26,7 @@ export function applySettingsPatch(current: RoomSettings, patch: unknown, minPla
   }
   if ("customOnly" in p) next.customOnly = p.customOnly === true;
   if ("paintThrow" in p) next.paintThrow = p.paintThrow === true;
+  if ("listed" in p) next.listed = p.listed === true;
   if ("mode" in p && GAME_MODE_IDS.includes(p.mode as GameModeId)) next.mode = p.mode as GameModeId;
   if ("drawOffTime" in p) next.drawOffTime = clampInt(p.drawOffTime, SETTING_BOUNDS.drawOffTime, current.drawOffTime);
   if ("perimeterTime" in p) next.perimeterTime = clampInt(p.perimeterTime, SETTING_BOUNDS.perimeterTime, current.perimeterTime);

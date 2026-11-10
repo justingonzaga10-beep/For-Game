@@ -189,6 +189,15 @@ export function Lobby() {
               Paint throwing 🎨
             </label>
           </div>
+          {!view.isPublic && (
+            <div className="field">
+              <span>Open rooms</span>
+              <label className="check">
+                <input id="set-listed" type="checkbox" checked={s.listed} onChange={(e) => set({ listed: e.target.checked })} />
+                Show on the start page
+              </label>
+            </div>
+          )}
           {isDrawOff && (
             <Field label="Draw time">
               <select id="set-drawoff-time" value={s.drawOffTime} onChange={(e) => set({ drawOffTime: +e.target.value })}>
