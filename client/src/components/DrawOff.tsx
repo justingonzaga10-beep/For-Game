@@ -223,11 +223,17 @@ function Results() {
   return (
     <div className="do-results panel cabinet" role="status">
       <ol className="do-podium">
-        {top.map((r) => (
-          <li key={r.entryId} className={`rank-${r.rank}`}>
-            <span className="medal">#{r.rank}</span>
+        {top.map((r, i) => (
+          // rank-N picks the medal colour (ties share a rank); slot-N places the card (best in the middle, biggest).
+          <li key={r.entryId} className={`rank-${r.rank} slot-${i}`} aria-label={`${ordinal(r.rank)} place: ${r.name}`}>
+            {r.rank === 1 && (
+              <span className="crown" aria-hidden="true">
+                👑
+              </span>
+            )}
+            <span className="medal">{ordinal(r.rank)}</span>
             <Thumbnail entryId={r.entryId} actions={g.drawOffEntries[r.entryId]} label={`Drawing by ${r.name}`} />
-            <ResultLine r={r} />
+            <PodiumName r={r} />
           </li>
         ))}
       </ol>
@@ -235,12 +241,35 @@ function Results() {
         <ul className="do-rest">
           {rest.map((r) => (
             <li key={r.entryId}>
-              <span className="medal small">#{r.rank}</span>
+              <span className="medal small">{ordinal(r.rank)}</span>
               <ResultLine r={r} />
             </li>
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** 1 → "1st", 2 → "2nd", 3 → "3rd", 4 → "4th". */
+const ordinal = (n: number) => `${n}${n === 1 ? "st" : n === 2 ? "nd" : n === 3 ? "rd" : "th"}`;
+
+/** A top-3 card's name: big and in the medal's colour, with the stars and points under it. */
+function PodiumName({ r }: { r: DrawOffResult }) {
+  const me = useGame().view!.you === r.playerId;
+  return (
+    <div className="podium-name">
+      <div className="who">
+        <Avatar avatar={r.avatar} size={36} />
+        <span className="pname">
+          {r.name}
+          {me && <em> (you)</em>}
+        </span>
+      </div>
+      <div className="score-line">
+        <Stars value={r.rating} />
+        <span className="plus">+{r.points}</span>
+      </div>
     </div>
   );
 }

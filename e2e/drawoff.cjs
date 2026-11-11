@@ -116,6 +116,10 @@ const ink = (page) => page.evaluate(() => {
     await host.waitForTimeout(700);
     const podium = await host.locator(".do-podium li").count();
     ok(podium === 3, "results show a top-3 podium");
+    const medals = await host.locator(".do-podium .medal").allTextContents();
+    ok(medals[0] === "1st" && medals.every((m) => /^[123](st|nd|rd)$/.test(m)), `top 3 get 1st/2nd/3rd badges: ${medals.join(", ")}`);
+    ok((await host.locator(".do-podium .rank-1 .crown").count()) >= 1, "1st place wears a crown");
+    ok((await host.locator(".do-podium li .thumb").count()) === 3, "each of the top 3 shows their drawing");
     const ratings = await host.locator(".do-results .star-row b").allTextContents();
     ok(ratings.every((r) => Number(r) >= 1 && Number(r) <= 5), `ratings between 1 and 5: ${ratings.join(", ")}`);
     if (round === 1) {
