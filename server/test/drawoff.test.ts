@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SETTINGS, TIMING, type DrawOffEntry, type RoomView } from "@inkwave/shared";
 import { Room, type RoomTransport } from "../src/game/Room";
 import { drawOffPoints, drawOffRating } from "../src/game/DrawOffMode";
-import { THEMES, pickTheme } from "../src/game/themes";
+import { THEMES, parseCustomThemes, pickDrawOffTheme, pickTheme } from "../src/game/themes";
 import { containsProfanity } from "../src/game/profanity";
 import { applySettingsPatch } from "../src/game/settings";
 
@@ -328,6 +328,53 @@ describe("Draw-Off: themes and settings", () => {
       used.add(t);
     }
     expect(THEMES).toContain(pickTheme(used));
+  });
+
+  it("reads the host's themes: commas or new lines, tidy, no repeats, nothing rude, capped", () => {
+    expect(containsProfanity("shit")).toBe(true);
+    expect(parseCustomThemes(" Jeepney ,my family\nRainy   Day,,jeepney, shit\n")).toEqual(["Jeepney", "my family", "Rainy Day"]);
+    expect(parseCustomThemes("x".repeat(100))[0]).toHaveLength(32);
+    expect(parseCustomThemes(Array.from({ length: 80 }, (_, i) => `Theme ${i}`).join(","))).toHaveLength(50);
+    expect(parseCustomThemes("")).toEqual([]);
+  });
+
+  it("keeps line breaks in the setting, drops other control characters, caps the length", () => {
+    const s = applySettingsPatch(DEFAULT_SETTINGS, { customThemes: "Dog\nCat\u0007Bird​" }, 1);
+    expect(s.customThemes).toBe("Dog\nCat Bird ");
+    expect(applySettingsPatch(DEFAULT_SETTINGS, { customThemes: "a".repeat(5000) }, 1).customThemes).toHaveLength(1500);
+    expect(applySettingsPatch(DEFAULT_SETTINGS, { customThemes: 42 }, 1).customThemes).toBe("");
+  });
+
+  it("plays the host's themes first, then built-in ones, without repeats", () => {
+    const { room, io } = setup(3, { rounds: 3 });
+    room.updateSettings("p0", { customThemes: "Jeepney, Rainy Day" });
+    room.requestStart("p0");
+    const seen: string[] = [];
+    for (let r = 0; r < 3; r++) {
+      seen.push(io.d("p0").theme!);
+      vi.advanceTimersByTime(DRAW_MS + VOTE_MS * 3 + (TIMING.drawOffResultsSeconds + TIMING.drawOffGallerySeconds) * 1000);
+    }
+    expect(seen.slice(0, 2).sort()).toEqual(["Jeepney", "Rainy Day"]);
+    expect(THEMES).toContain(seen[2]);
+    expect(room.phase).toBe("podium");
+  });
+
+  it("only the host can set themes, and only the host sees them", () => {
+    const { room, io } = setup(3);
+    room.updateSettings("p1", { customThemes: "Not allowed" });
+    expect(room.settings.customThemes).toBe("");
+    room.updateSettings("p0", { customThemes: "Jeepney, Rainy Day, shit" });
+    expect(io.view("p0").settings.customThemes).toBe("Jeepney, Rainy Day, shit");
+    expect(io.view("p1").settings.customThemes).toBe("");
+    expect(io.view("p1").customThemeCount).toBe(2);
+    expect(io.view("p0").customThemeCount).toBe(2);
+  });
+
+  it("uses a single host theme once, then built-in ones", () => {
+    const used = new Set<string>();
+    expect(pickDrawOffTheme(used, ["Jeepney"], () => 0)).toBe("Jeepney");
+    used.add("Jeepney");
+    expect(THEMES).toContain(pickDrawOffTheme(used, ["Jeepney"], () => 0));
   });
 
   it("validates the mode and draw time", () => {

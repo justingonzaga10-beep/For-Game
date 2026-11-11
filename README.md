@@ -121,7 +121,9 @@ After the last round, the final podium shows, then the room returns to the lobby
 
 **How-to-play videos.** The start page ("Watch how to play") and the lobby ("How to play") open short videos for both modes, recorded from real games with captions and the game's background tune (in-game music pauses while one plays). They live in `client/src/assets/tutorials/` (the build gives them content-based file names, so browsers always load the latest version). To re-record them after the game changes, build the app, then run `node tools/record-tutorials.cjs` (needs Playwright and ffmpeg). It plays scripted games on its own local server and writes new MP4s (with music, via `tools/add-music.ts`) and poster images. The tune itself is in `shared/src/music.ts`; to add it to any video, run `npx tsx tools/add-music.ts video.mp4`.
 
-**Themes** live in `server/src/themes/en.json`. They are short, open prompts of 1–2 words ("Dragon", "Dream House", "Kindness") so every player can imagine them their own way. Add, remove or edit lines in the `themes` list and redeploy. A unit test checks there are at least 50, each 1–2 words, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
+**Your own themes.** In the Draw-Off lobby, the host can type their own themes in the **Your themes** box (separated by commas or new lines, any language, up to 50 themes of 32 characters each). Each round uses one of the host's themes first, in random order; once they run out, the built-in themes fill the remaining rounds. Repeats and anything the profanity filter catches are skipped. The themes stay a surprise: other players only see how many were added, and the server never sends them the text.
+
+**Built-in themes** live in `server/src/themes/en.json`. They are short, open prompts of 1–2 words ("Dragon", "Dream House", "Kindness") so every player can imagine them their own way. Add, remove or edit lines in the `themes` list and redeploy. A unit test checks there are at least 50, each 1–2 words, with no duplicates and nothing the profanity filter catches. Themes don't repeat within a game.
 
 ### Perimeter
 

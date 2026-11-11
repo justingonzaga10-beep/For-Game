@@ -174,6 +174,8 @@ export interface RoomView {
   podium: PodiumEntry[] | null;
   /** Ids you have voted to kick. */
   yourKickVotes: string[];
+  /** Draw-Off: how many usable themes the host has added (the themes themselves only go to the host). */
+  customThemeCount: number;
 }
 
 /* ------------------------------------------------------------------ */

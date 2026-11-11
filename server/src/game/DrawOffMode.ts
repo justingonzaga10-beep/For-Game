@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { DRAWOFF_MIN_PLAYERS, TIMING, type Avatar, type DrawAction, type DrawOffResult, type DrawOffView } from "@inkwave/shared";
 import { CanvasState } from "./CanvasState";
 import type { GameMode, ModeView, Player, RoomContext } from "./GameMode";
-import { pickTheme } from "./themes";
+import { parseCustomThemes, pickDrawOffTheme } from "./themes";
 
 /** Each player's drawing is capped lower than a guessing turn, since every drawing is sent to everyone. */
 const MAX_POINTS_PER_DRAWING = 30_000;
@@ -76,7 +76,7 @@ export class DrawOffMode implements GameMode {
   private beginRound(): void {
     const room = this.room;
     room.clearTimers();
-    this.theme = pickTheme(this.usedThemes, room.rand);
+    this.theme = pickDrawOffTheme(this.usedThemes, parseCustomThemes(room.settings.customThemes), room.rand);
     this.usedThemes.add(this.theme);
     this.participants = new Set(room.players.keys());
     this.canvases = new Map([...this.participants].map((id) => [id, new CanvasState(MAX_POINTS_PER_DRAWING)]));

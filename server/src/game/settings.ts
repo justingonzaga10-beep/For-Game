@@ -24,6 +24,10 @@ export function applySettingsPatch(current: RoomSettings, patch: unknown, minPla
     // Keep commas and spaces; strip control characters; cap the length.
     next.customWords = p.customWords.replace(/[\p{Cc}\p{Cf}]/gu, " ").slice(0, LIMITS.customWords);
   }
+  if ("customThemes" in p && typeof p.customThemes === "string") {
+    // Keep commas and line breaks (both separate themes); strip other control characters; cap the length.
+    next.customThemes = p.customThemes.replace(/[\p{Cc}\p{Cf}]/gu, (c) => (c === "\n" ? "\n" : " ")).slice(0, LIMITS.customThemes);
+  }
   if ("customOnly" in p) next.customOnly = p.customOnly === true;
   if ("paintThrow" in p) next.paintThrow = p.paintThrow === true;
   if ("listed" in p) next.listed = p.listed === true;

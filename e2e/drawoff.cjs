@@ -43,8 +43,16 @@ const ink = (page) => page.evaluate(() => {
   ok(await host.isDisabled("text=Waiting for players (2/3)"), "Draw-Off start is blocked with 2 players");
   ok((await b.getAttribute("#mode-drawoff", "aria-checked")) === "true", "guests see the chosen mode");
   ok(await b.isDisabled("#mode-guess"), "guests can't change the mode");
+  // The host types their own themes; guests only see how many, not what they are.
+  const MY_THEMES = ["Jeepney", "Rainy Day"];
+  await host.fill("#set-themes", MY_THEMES.join(", "));
+  await host.locator("#set-themes").blur();
+  await b.waitForFunction(() => document.querySelector("label[for=set-themes]")?.textContent?.includes("2 themes added"), null, { timeout: 5000 }).catch(() => {});
+  ok((await b.textContent("label[for=set-themes]")).includes("2 themes added"), "guests see how many themes the host added");
+  ok((await b.locator("#set-themes").count()) === 0 && !(await b.textContent(".lobby")).includes("Jeepney"), "guests can't see or edit the host's themes");
   for (const p of [c, phone]) { await p.goto(link); await p.fill("#nickname", p.name); await p.click("text=Join room"); await p.waitForSelector(".lobby"); }
   await host.waitForTimeout(300);
+  const playedThemes = [];
   await host.screenshot({ path: `${SHOTS}/drawoff-lobby.png` });
   await host.click("text=Start Draw-Off");
 
@@ -53,6 +61,9 @@ const ink = (page) => page.evaluate(() => {
     await Promise.all(all.map((p) => p.waitForSelector(".board.drawoff_drawing .toolbar")));
     const themes = await Promise.all(all.map((p) => p.textContent(".word-real.theme")));
     ok(new Set(themes).size === 1, `everyone has the same theme: ${themes[0].replace(/^Draw this/, "")}`);
+    const played = MY_THEMES.find((t) => themes[0].includes(t));
+    ok(played && !playedThemes.includes(played), `the round uses one of the host's themes: ${played}`);
+    playedThemes.push(played);
 
     // Everyone but Cai draws something; Cai submits a blank canvas.
     for (const [i, p] of [host, b, phone].entries()) {

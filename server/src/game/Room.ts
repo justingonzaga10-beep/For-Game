@@ -20,6 +20,7 @@ import { GuessMode } from "./GuessMode";
 import { PerimeterMode } from "./PerimeterMode";
 import { maskProfanity } from "./profanity";
 import { TokenBucket } from "./rateLimit";
+import { parseCustomThemes } from "./themes";
 import { rankScores } from "./scoring";
 import { applySettingsPatch } from "./settings";
 
@@ -427,7 +428,9 @@ export class Room implements RoomContext {
       isPublic: this.isPublic,
       you: playerId,
       hostId: this.hostId,
-      settings: this.settings,
+      // The host's Draw-Off themes stay a surprise: only the host gets the text.
+      settings: playerId === this.hostId ? this.settings : { ...this.settings, customThemes: "" },
+      customThemeCount: parseCustomThemes(this.settings.customThemes).length,
       players,
       phase: this.phase,
       round: this.round,

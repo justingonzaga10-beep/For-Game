@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { DRAWOFF_MIN_PLAYERS, MEASURE_SHAPES, kindsFor, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
+import { DRAWOFF_MIN_PLAYERS, LIMITS, MEASURE_SHAPES, kindsFor, LANGUAGES, PERIMETER_MAXES, SETTING_BOUNDS, SHAPE_LABELS, type GameModeId, type RoomSettings, type ShapeKind, type WordMode } from "@inkwave/shared";
 import { useCountdown, useGame } from "../lib/game";
 import { useMuted } from "../lib/muted";
 import { Avatar } from "./Avatar";
@@ -34,18 +34,9 @@ export function Lobby() {
   const set = (patch: Partial<RoomSettings>) => g.updateSettings(patch);
   const countdown = useCountdown();
 
-  // Custom words are typed freely and sent after a short pause.
-  const [words, setWords] = useState(s.customWords);
-  const [editing, setEditing] = useState(false);
-  useEffect(() => {
-    if (!editing) setWords(s.customWords);
-  }, [s.customWords, editing]);
-  useEffect(() => {
-    if (!editing || words === s.customWords) return;
-    const t = setTimeout(() => set({ customWords: words }), 450);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [words, editing]);
+  // Custom words and Draw-Off themes are typed freely and sent after a short pause.
+  const words = useDraft(s.customWords, (v) => set({ customWords: v }));
+  const themes = useDraft(s.customThemes, (v) => set({ customThemes: v }));
 
   const link = `${location.origin}/room/${view.code}`;
   const [copied, setCopied] = useState(false);
@@ -149,7 +140,7 @@ export function Lobby() {
                   </button>
                 ))}
               </div>
-              {isDrawOff && <small className="muted">Needs at least {DRAWOFF_MIN_PLAYERS} players. Themes are in English.</small>}
+              {isDrawOff && <small className="muted">Needs at least {DRAWOFF_MIN_PLAYERS} players. Built-in themes are in English.</small>}
               {isPerimeter && <small className="muted">Each player makes a shape with measurements; the others work out its {measure}.</small>}
             </div>
           )}
@@ -208,6 +199,27 @@ export function Lobby() {
                 ))}
               </select>
             </Field>
+          )}
+          {isDrawOff && (
+            <div className="field wide">
+              <label htmlFor="set-themes">
+                {isHost ? "Your themes" : "Themes"}{" "}
+                <small className="muted">
+                  {isHost && "comma-separated · "}
+                  {view.customThemeCount} {view.customThemeCount === 1 ? "theme" : "themes"} added
+                </small>
+              </label>
+              {isHost ? (
+                <>
+                  <textarea id="set-themes" rows={3} maxLength={LIMITS.customThemes} placeholder="Jeepney, My Family, Rainy Day, Bahay Kubo" {...themes} />
+                  <small className="muted">Used first, in random order. Built-in themes fill any rounds left over.</small>
+                </>
+              ) : (
+                <small className="muted" id="set-themes-guest">
+                  {view.customThemeCount > 0 ? "The host picked some themes. They're a surprise!" : "The game will pick the themes."}
+                </small>
+              )}
+            </div>
           )}
           {isPerimeter && (
             <>
@@ -318,18 +330,7 @@ export function Lobby() {
               <label htmlFor="set-words">
                 Custom words <small className="muted">comma-separated · {customCount} added</small>
               </label>
-              <textarea
-                id="set-words"
-                rows={3}
-                value={words}
-                placeholder="tarsier, jeepney, halo-halo, rubber duck"
-                onFocus={() => setEditing(true)}
-                onBlur={() => {
-                  setEditing(false);
-                  if (words !== s.customWords) set({ customWords: words });
-                }}
-                onChange={(e) => setWords(e.target.value)}
-              />
+              <textarea id="set-words" rows={3} placeholder="tarsier, jeepney, halo-halo, rubber duck" {...words} />
               <label className="check">
                 <input id="set-custom-only" type="checkbox" checked={s.customOnly} onChange={(e) => set({ customOnly: e.target.checked })} />
                 Use custom words only
@@ -369,6 +370,34 @@ export function Lobby() {
       </section>
     </div>
   );
+}
+
+/**
+ * A text box for a room setting: typing stays local and is sent after a short
+ * pause (and when the box loses focus); while not typing it follows the server.
+ * Spread the result onto a <textarea>.
+ */
+function useDraft(serverValue: string, send: (v: string) => void) {
+  const [value, setValue] = useState(serverValue);
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) setValue(serverValue);
+  }, [serverValue, editing]);
+  useEffect(() => {
+    if (!editing || value === serverValue) return;
+    const t = setTimeout(() => send(value), 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, editing]);
+  return {
+    value,
+    onFocus: () => setEditing(true),
+    onBlur: () => {
+      setEditing(false);
+      if (value !== serverValue) send(value);
+    },
+    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => setValue(e.target.value),
+  };
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

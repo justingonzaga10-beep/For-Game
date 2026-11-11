@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+import { LIMITS, sanitizeText } from "@inkwave/shared";
 import en from "../themes/en.json";
+import { containsProfanity } from "./profanity";
 
 /**
  * Draw-Off themes: server/src/themes/en.json, or a JSON file named by the
@@ -29,4 +31,33 @@ export function pickTheme(used: Set<string>, rand: () => number = Math.random, l
   const fresh = list.filter((t) => !used.has(t));
   const pool = fresh.length ? fresh : list;
   return pool[Math.floor(rand() * pool.length)] ?? "anything you like";
+}
+
+/**
+ * The host's own themes from the lobby box: split on commas or new lines,
+ * tidied, capped in length, duplicates and anything the profanity filter
+ * catches dropped. Keeps the host's capitals ("Dream House").
+ */
+export function parseCustomThemes(raw: string): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const part of raw.split(/[,\n]/)) {
+    const t = sanitizeText(part, LIMITS.customThemeLength);
+    const key = t.toLowerCase();
+    if (!t || seen.has(key) || containsProfanity(t)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length >= LIMITS.maxCustomThemes) break;
+  }
+  return out;
+}
+
+/**
+ * The theme for a Draw-Off round: one of the host's themes not used yet this
+ * game (in random order), then the built-in themes once the host's run out.
+ */
+export function pickDrawOffTheme(used: Set<string>, custom: string[], rand: () => number = Math.random): string {
+  const fresh = custom.filter((t) => !used.has(t));
+  if (fresh.length) return fresh[Math.floor(rand() * fresh.length)];
+  return pickTheme(used, rand);
 }

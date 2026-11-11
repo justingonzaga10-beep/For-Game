@@ -18,6 +18,10 @@ export const LIMITS = {
   customWords: 2000, // characters in the comma-separated list
   customWordLength: 32,
   maxCustomWords: 300,
+  /** Draw-Off: the host's own themes (characters in the list, length of one, how many). */
+  customThemes: 1500,
+  customThemeLength: 32,
+  maxCustomThemes: 50,
   roomCodeLength: 6,
   /** Points one draw batch may carry (x, y, pressure triplets). */
   pointsPerBatch: 600,
@@ -68,6 +72,12 @@ export interface RoomSettings {
   language: LanguageCode;
   customWords: string;
   customOnly: boolean;
+  /**
+   * Draw-Off: the host's own themes, separated by commas or new lines. They are
+   * used first (in random order); the built-in themes fill any rounds left.
+   * Only the host receives this text; other players get an empty string.
+   */
+  customThemes: string;
   /** Players may throw paint at each other (a splat that fades; the host can turn it off). */
   paintThrow: boolean;
   /** Private rooms: show this room in the "Open rooms" list on the start page while it waits in the lobby. */
@@ -106,6 +116,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   language: "en",
   customWords: "",
   customOnly: false,
+  customThemes: "",
   paintThrow: true,
   listed: true,
   drawOffTime: 90,
