@@ -184,6 +184,7 @@ io.on("connection", (socket) => {
   socket.on("mod:votekick", guard((id) => roomOf(socket)?.voteKick(socket.id, String(id))));
   socket.on("drawoff:vote", guard((entryId, stars) => roomOf(socket)?.vote(socket.id, entryId, stars)));
   socket.on("drawoff:continue", guard(() => roomOf(socket)?.hostContinue(socket.id)));
+  socket.on("drawoff:ready", guard((ready) => roomOf(socket)?.drawOffReady(socket.id, ready)));
   socket.on("perim:shape", guard((shape) => roomOf(socket)?.submitShape(socket.id, shape)));
   socket.on("perim:answer", guard((value) => roomOf(socket)?.answer(socket.id, value)));
   socket.on("react", guard((emoji) => roomOf(socket)?.react(socket.id, emoji)));

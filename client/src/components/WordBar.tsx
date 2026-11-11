@@ -98,7 +98,7 @@ export function TimerRing({ urgent }: { urgent: boolean }) {
     reveal: TIMING.revealSeconds,
     podium: TIMING.podiumSeconds,
     drawoff_drawing: view.settings.drawOffTime,
-    drawoff_voting: TIMING.drawOffVoteSeconds,
+    drawoff_voting: view.settings.drawOffVoteTime,
     drawoff_results: TIMING.drawOffResultsSeconds,
     drawoff_gallery: TIMING.drawOffGallerySeconds,
     perim_build: TIMING.perimeterBuildSeconds,

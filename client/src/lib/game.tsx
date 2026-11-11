@@ -45,6 +45,8 @@ interface GameApi {
   submitShape: (shape: PerimeterShape) => void;
   answerPerimeter: (value: number) => void;
   drawOffContinue: () => void;
+  /** Draw-Off: done drawing (true) or keep drawing (false). */
+  drawOffReady: (ready: boolean) => void;
   sendChat: (text: string) => void;
   kick: (id: string) => void;
   ban: (id: string) => void;
@@ -238,6 +240,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     },
     vote: (entryId, stars) => socket.emit("drawoff:vote", entryId, stars),
     drawOffContinue: () => socket.emit("drawoff:continue"),
+    drawOffReady: (ready) => socket.emit("drawoff:ready", ready),
     perimFeedback,
     submitShape: (shape) => socket.emit("perim:shape", shape),
     answerPerimeter: (value) => socket.emit("perim:answer", value),

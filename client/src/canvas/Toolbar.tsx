@@ -6,6 +6,8 @@ interface Props {
   setTools: (t: ToolState) => void;
   onUndo: () => void;
   onClear: () => void;
+  /** Extra controls at the end of the toolbar (Draw-Off's Ready button). */
+  extra?: React.ReactNode;
 }
 
 const TOOL_INFO: { id: Tool; label: string; key: string; icon: JSX.Element }[] = [
@@ -101,7 +103,7 @@ function BrushIcon({ kind, color }: { kind: BrushKind; color: string }) {
   }
 }
 
-export function Toolbar({ tools, setTools, onUndo, onClear }: Props) {
+export function Toolbar({ tools, setTools, onUndo, onClear, extra }: Props) {
   const set = (patch: Partial<ToolState>) => setTools({ ...tools, ...patch });
   return (
     <div className="toolbar" role="toolbar" aria-label="Drawing tools">
@@ -198,6 +200,7 @@ export function Toolbar({ tools, setTools, onUndo, onClear }: Props) {
           </svg>
         </button>
       </div>
+      {extra}
     </div>
   );
 }

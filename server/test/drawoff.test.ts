@@ -8,7 +8,7 @@ import { applySettingsPatch } from "../src/game/settings";
 
 const AV = { head: 0, color: 0, eyes: 0, mouth: 0, top: 0 };
 const DRAW_MS = 60_000;
-const VOTE_MS = TIMING.drawOffVoteSeconds * 1000;
+const VOTE_MS = DEFAULT_SETTINGS.drawOffVoteTime * 1000;
 
 /** Records what each player receives. */
 class Recorder implements RoomTransport {
@@ -129,6 +129,85 @@ describe("Draw-Off: drawing", () => {
     room.handleDraw("p0", stroke().slice(0, 2)); // no "end"
     vi.advanceTimersByTime(DRAW_MS);
     expect(io.entries.get("p1")!.some((e) => e.actions.length === 1)).toBe(true);
+  });
+});
+
+describe("Draw-Off: ready", () => {
+  const PAUSE = TIMING.drawOffReadyPauseMs;
+
+  it("Ready pauses your drawing, Cancel lets you keep drawing, and everyone sees who is ready", () => {
+    const { room, io } = setup();
+    room.requestStart("p0");
+    room.drawOffReady("p0", true);
+    expect(io.d("p1").readyIds).toEqual(["p0"]);
+    room.handleDraw("p0", stroke());
+    expect(room.drawOff.canvasOf("p0").length).toBe(0);
+    room.drawOffReady("p0", false);
+    expect(io.d("p1").readyIds).toEqual([]);
+    room.handleDraw("p0", stroke());
+    expect(room.drawOff.canvasOf("p0").length).toBe(1);
+    expect(room.phase).toBe("drawoff_drawing");
+  });
+
+  it("starts voting shortly after everyone is ready, keeping every drawing", () => {
+    const { room, io, ids } = setup();
+    room.requestStart("p0");
+    room.handleDraw("p1", stroke());
+    for (const id of ids) room.drawOffReady(id, true);
+    expect(room.phase).toBe("drawoff_drawing");
+    expect(io.view("p0").phaseEndsAt! - Date.now()).toBe(PAUSE);
+    room.drawOffReady("p2", false); // too late to change your mind
+    expect(io.d("p0").readyIds).toHaveLength(3);
+    vi.advanceTimersByTime(PAUSE);
+    expect(room.phase).toBe("drawoff_voting");
+    expect(io.entries.get("p0")).toHaveLength(3);
+    expect(io.entries.get("p0")!.filter((e) => e.actions.length)).toHaveLength(1);
+    expect(io.view("p0").phaseEndsAt! - Date.now()).toBe(VOTE_MS);
+    expect(io.d("p0").readyIds).toEqual([]);
+  });
+
+  it("waits while anyone is still drawing, and the round's timer still ends it", () => {
+    const { room } = setup();
+    room.requestStart("p0");
+    room.drawOffReady("p0", true);
+    room.drawOffReady("p1", true);
+    vi.advanceTimersByTime(DRAW_MS - 1);
+    expect(room.phase).toBe("drawoff_drawing");
+    vi.advanceTimersByTime(1);
+    expect(room.phase).toBe("drawoff_voting");
+  });
+
+  it("starts voting when the last player still drawing leaves", () => {
+    const { room } = setup(4);
+    room.requestStart("p0");
+    for (const id of ["p0", "p1", "p2"]) room.drawOffReady(id, true);
+    room.removePlayer("p3");
+    vi.advanceTimersByTime(PAUSE);
+    expect(room.phase).toBe("drawoff_voting");
+  });
+
+  it("ignores Ready from players watching this round, and outside drawing", () => {
+    const { room, io } = setup();
+    room.requestStart("p0");
+    room.addPlayer({ id: "late", clientId: "cl", ip: "", name: "Late", avatar: AV });
+    room.drawOffReady("late", true);
+    expect(io.d("p0").readyIds).toEqual([]);
+    for (const id of ["p0", "p1", "p2"]) room.drawOffReady(id, true);
+    vi.advanceTimersByTime(PAUSE);
+    expect(room.phase).toBe("drawoff_voting"); // the watcher didn't hold it up
+    room.drawOffReady("p0", true);
+    expect(io.d("p0").readyIds).toEqual([]);
+  });
+
+  it("uses the host's vote time, between 10 and 30 seconds", () => {
+    const { room, io, ids } = setup(3, { drawOffVoteTime: 20 });
+    room.requestStart("p0");
+    for (const id of ids) room.drawOffReady(id, true);
+    vi.advanceTimersByTime(PAUSE);
+    expect(io.view("p0").phaseEndsAt! - Date.now()).toBe(20_000);
+    expect(applySettingsPatch(DEFAULT_SETTINGS, { drawOffVoteTime: 2 }, 1).drawOffVoteTime).toBe(10);
+    expect(applySettingsPatch(DEFAULT_SETTINGS, { drawOffVoteTime: 99 }, 1).drawOffVoteTime).toBe(30);
+    expect(DEFAULT_SETTINGS.drawOffVoteTime).toBe(15);
   });
 });
 

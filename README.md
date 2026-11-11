@@ -104,13 +104,14 @@ e2e/      Playwright scripts that play real games in several browser contexts
 
 ### Draw-Off
 
-The host picks **Draw-Off** in the lobby of a private room (public rooms always play Guessing). It needs at least 3 players. The host sets the rounds (default 3) and the drawing time (default 90 s, 30–240 s).
+The host picks **Draw-Off** in the lobby of a private room (public rooms always play Guessing). It needs at least 3 players. The host sets the rounds (default 3), the drawing time (default 90 s, 30–240 s) and the vote time (how long each drawing is shown for voting: 10, 15, 20 or 30 s, default 15 s).
 
 1. **Draw.** Everyone gets the same theme and draws on a private canvas. Strokes go only to the server, never to other players.
-2. **Submit.** When time runs out, every drawing is submitted automatically, blank ones included.
-3. **Vote.** Drawings appear one at a time in random order, with no names, for 10 s each. Players tap 1–5 stars (or press 1–5); tapping again changes your vote. You can't rate your own drawing, and the next drawing comes up early once everyone has voted. Votes for a drawing that has already moved on are ignored.
-4. **Results.** Names are revealed. The top 3 are highlighted with their drawings in gold, silver and bronze cards (**1st**, **2nd**, **3rd** badges, big names in the medal colour, a crown on 1st place, which sits in the middle and is the biggest). Everyone else is listed below with their place (4th, 5th, …), stars and points. Ties share a place. A drawing's rating is the average of the stars it received, or 1 if nobody voted, so it never scores below the 1-star floor. Points are rating × 100 (100–500).
-5. **Gallery.** Everyone can browse the round's drawings (tap one to see it full size) for 20 s; the host can skip ahead.
+2. **Ready.** A player who has finished taps **✓ I'm ready** in the toolbar. Their drawing is paused (a green "Ready" stamp shows on it, and a tick shows by their name in the player list) until they tap **Cancel, keep drawing**. The top bar shows how many are ready ("2/5 ready"; players who joined mid-round don't count). When everyone is ready, "Everyone is ready! Time to vote" shows for a moment and voting starts, so nobody waits for the clock. After that, Ready can't be cancelled.
+3. **Submit.** When everyone is ready or time runs out, every drawing is submitted automatically, blank ones included.
+4. **Vote.** Drawings appear one at a time in random order, with no names, for the host's vote time each (15 s by default). Players tap 1–5 stars (or press 1–5); tapping again changes your vote. You can't rate your own drawing, and the next drawing comes up early once everyone has voted. Votes for a drawing that has already moved on are ignored.
+5. **Results.** Names are revealed. The top 3 are highlighted with their drawings in gold, silver and bronze cards (**1st**, **2nd**, **3rd** badges, big names in the medal colour, a crown on 1st place, which sits in the middle and is the biggest). Everyone else is listed below with their place (4th, 5th, …), stars and points. Ties share a place. A drawing's rating is the average of the stars it received, or 1 if nobody voted, so it never scores below the 1-star floor. Points are rating × 100 (100–500).
+6. **Gallery.** Everyone can browse the round's drawings (tap one to see it full size) for 20 s; the host can skip ahead.
 
 After the last round, the final podium shows, then the room returns to the lobby with the same settings.
 

@@ -41,6 +41,10 @@ export class DrawOffMode implements GameMode {
   private usedThemes = new Set<string>();
   /** Players drawing this round (joiners wait for the next round). */
   private participants = new Set<string>();
+  /** Players who clicked Ready: their drawing is paused until they cancel. */
+  private ready = new Set<string>();
+  /** Everyone is ready: voting starts after a short pause, and Ready can't be cancelled any more. */
+  private closing = false;
   private canvases = new Map<string, CanvasState>();
   /** Submitted drawings, in voting order. */
   private entries: Entry[] = [];
@@ -65,6 +69,8 @@ export class DrawOffMode implements GameMode {
   reset(): void {
     this.theme = null;
     this.participants.clear();
+    this.ready.clear();
+    this.closing = false;
     this.canvases.clear();
     this.entries = [];
     this.votes.clear();
@@ -79,6 +85,8 @@ export class DrawOffMode implements GameMode {
     this.theme = pickDrawOffTheme(this.usedThemes, parseCustomThemes(room.settings.customThemes), room.rand);
     this.usedThemes.add(this.theme);
     this.participants = new Set(room.players.keys());
+    this.ready = new Set();
+    this.closing = false;
     this.canvases = new Map([...this.participants].map((id) => [id, new CanvasState(MAX_POINTS_PER_DRAWING)]));
     this.entries = [];
     this.votes = new Map();
@@ -90,12 +98,44 @@ export class DrawOffMode implements GameMode {
     room.setPhase("drawoff_drawing", Date.now() + ms);
     room.io.broadcast("drawoff:canvas", [[]]);
     room.system(`Round ${room.round} of ${room.settings.rounds}: draw "${this.theme}"`);
-    room.later(ms, () => this.submitAll());
+    room.later(ms, () => this.submitAll("time"));
     room.sync();
   }
 
-  /** Time's up: everyone's canvas becomes an entry, empty ones included. */
-  private submitAll(): void {
+  /* ---------------------------------------------------------------- */
+  /* Ready                                                             */
+  /* ---------------------------------------------------------------- */
+
+  /** A player is done drawing (their drawing is paused), or changed their mind. */
+  setReady(byId: string, ready: boolean): void {
+    const room = this.room;
+    if (room.phase !== "drawoff_drawing" || this.closing || !this.participants.has(byId)) return;
+    if (ready === this.ready.has(byId)) return;
+    if (ready) this.ready.add(byId);
+    else this.ready.delete(byId);
+    if (!this.startVoteIfAllReady()) room.sync();
+  }
+
+  /**
+   * Once every player drawing this round is ready, voting starts after a short
+   * pause. Returns true if it did (the room is then already synced).
+   */
+  private startVoteIfAllReady(): boolean {
+    const room = this.room;
+    if (room.phase !== "drawoff_drawing" || this.closing) return false;
+    const drawing = [...this.participants].filter((id) => room.players.has(id));
+    if (drawing.length === 0 || !drawing.every((id) => this.ready.has(id))) return false;
+    this.closing = true;
+    room.clearTimers();
+    room.setPhase("drawoff_drawing", Date.now() + TIMING.drawOffReadyPauseMs);
+    room.system("Everyone is ready! Time to vote.");
+    room.later(TIMING.drawOffReadyPauseMs, () => this.submitAll("ready"));
+    room.sync();
+    return true;
+  }
+
+  /** Time's up (or everyone is ready): everyone's canvas becomes an entry, empty ones included. */
+  private submitAll(reason: "time" | "ready"): void {
     const room = this.room;
     room.clearTimers();
     this.entries = [...this.participants]
@@ -115,7 +155,7 @@ export class DrawOffMode implements GameMode {
     }
     this.canvases.clear();
     room.io.broadcast("drawoff:entries", [this.entries.map(({ entryId, actions }) => ({ entryId, actions }))]);
-    room.system("Time's up! Rate each drawing from 1 to 5 stars.");
+    room.system(reason === "time" ? "Time's up! Rate each drawing from 1 to 5 stars." : "Rate each drawing from 1 to 5 stars.");
     this.voteIndex = 0;
     this.showEntry();
   }
@@ -136,7 +176,7 @@ export class DrawOffMode implements GameMode {
     while (this.voteIndex < this.entries.length && this.eligibleVoters(this.entries[this.voteIndex]).length === 0) this.voteIndex++;
     if (this.voteIndex >= this.entries.length) return this.finishVoting();
     const step = ++this.step;
-    const ms = TIMING.drawOffVoteSeconds * 1000;
+    const ms = room.settings.drawOffVoteTime * 1000;
     room.setPhase("drawoff_voting", Date.now() + ms);
     room.later(ms, () => step === this.step && this.advance());
     room.sync();
@@ -223,6 +263,7 @@ export class DrawOffMode implements GameMode {
       // Back after a reload while drawing: same seat, same picture.
       this.participants.delete(rejoin.oldId);
       this.participants.add(p.id);
+      this.ready.delete(rejoin.oldId); // back from a reload: not ready until they say so again
       const c = new CanvasState(MAX_POINTS_PER_DRAWING);
       c.load(saved.actions);
       this.canvases.set(p.id, c);
@@ -247,6 +288,9 @@ export class DrawOffMode implements GameMode {
     const phase = this.room.phase;
     this.participants.delete(playerId);
     this.canvases.delete(playerId);
+    this.ready.delete(playerId);
+    // The one still drawing left: everyone left is ready.
+    if (phase === "drawoff_drawing") return this.startVoteIfAllReady();
     if (phase !== "drawoff_voting") return false;
 
     // Drop their drawing from the vote. Votes they already cast still count.
@@ -272,6 +316,7 @@ export class DrawOffMode implements GameMode {
 
   handleDraw(byId: string, ops: unknown[]): void {
     if (this.room.phase !== "drawoff_drawing") return;
+    if (this.ready.has(byId) || this.closing) return; // ready: the drawing is paused
     const canvas = this.canvases.get(byId);
     const p = this.room.players.get(byId);
     if (!canvas || !p || !p.drawLimit.take()) return;
@@ -320,6 +365,7 @@ export class DrawOffMode implements GameMode {
             theme: this.theme,
             spectating: !this.participants.has(playerId),
             participantIds: [...this.participants],
+            readyIds: phase === "drawoff_drawing" ? [...this.ready] : [],
             current,
             results: phase === "drawoff_results" || phase === "drawoff_gallery" ? this.results : null,
           }

@@ -9,6 +9,8 @@ import { PlayerActions } from "./PlayerActions";
 
 const DRAW_TIMES = [15, 20, 30, 40, 50, 60, 70, 80, 90, 100, 120, 150, 180, 210, 240];
 const DRAWOFF_TIMES = [30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
+/** Draw-Off: seconds each drawing is shown for voting. */
+const VOTE_TIMES = [10, 15, 20, 30];
 const GAME_MODE_CARDS: { id: GameModeId; title: string; blurb: string }[] = [
   { id: "guess", title: "Guessing", blurb: "One player draws, everyone else races to guess the word." },
   { id: "drawoff", title: "Draw-Off", blurb: "Everyone draws the same theme, then rates each other's art." },
@@ -195,6 +197,17 @@ export function Lobby() {
                 {withValue(DRAWOFF_TIMES, s.drawOffTime).map((n) => (
                   <option key={n} value={n}>
                     {n} s
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {isDrawOff && (
+            <Field label="Vote time">
+              <select id="set-drawoff-vote" value={s.drawOffVoteTime} onChange={(e) => set({ drawOffVoteTime: +e.target.value })}>
+                {withValue(VOTE_TIMES, s.drawOffVoteTime).map((n) => (
+                  <option key={n} value={n}>
+                    {n} s per drawing
                   </option>
                 ))}
               </select>

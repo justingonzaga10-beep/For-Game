@@ -17,7 +17,10 @@ export function DrawOffScreen() {
   const view = g.view!;
   const d = view.drawOff;
   const phase = view.phase;
-  const canDraw = phase === "drawoff_drawing" && !!d && !d.spectating;
+  const drawingThisRound = phase === "drawoff_drawing" && !!d && !d.spectating;
+  const imReady = !!d?.readyIds.includes(view.you);
+  // Ready pauses your drawing until you cancel.
+  const canDraw = drawingThisRound && !imReady;
   const { tools, setTools, engineRef, emitRef, undo, clear } = useDrawingTools(canDraw);
 
   let body: JSX.Element;
@@ -32,8 +35,31 @@ export function DrawOffScreen() {
               <p className="muted">You joined mid-round, so you'll draw from the next round. Hang tight!</p>
             </div>
           )}
+          {drawingThisRound && imReady && <span className="ready-stamp">✓ Ready</span>}
         </div>
-        {canDraw && <Toolbar tools={tools} setTools={setTools} onUndo={undo} onClear={clear} />}
+        {canDraw && (
+          <Toolbar
+            tools={tools}
+            setTools={setTools}
+            onUndo={undo}
+            onClear={clear}
+            extra={
+              <button
+                type="button"
+                className="btn small primary ready-btn"
+                id="drawoff-ready"
+                title="Done? When everyone is ready, voting starts."
+                onClick={() => {
+                  g.drawOffReady(true);
+                  sfx.click();
+                }}
+              >
+                ✓ I'm ready
+              </button>
+            }
+          />
+        )}
+        {drawingThisRound && imReady && <ReadyBar />}
       </>
     );
   } else if (phase === "drawoff_voting") {
@@ -73,7 +99,9 @@ function DrawOffBar() {
     case "drawoff_drawing":
       center = (
         <span className="word-real drawer theme">
-          <small>{d?.spectating ? "Everyone is drawing" : "Draw this"}</small>
+          <small>
+            {d?.spectating ? "Everyone is drawing" : "Draw this"} · <ReadyCount />
+          </small>
           {theme}
         </span>
       );
@@ -125,6 +153,48 @@ function DrawOffBar() {
         {center}
       </div>
       <TimerRing urgent={view.phase === "drawoff_drawing"} />
+    </div>
+  );
+}
+
+/** How many of this round's players are ready, e.g. "2/5 ready". */
+function useReadyCount() {
+  const view = useGame().view!;
+  const d = view.drawOff;
+  const drawing = (d?.participantIds ?? []).filter((id) => view.players.some((p) => p.id === id));
+  const ready = (d?.readyIds ?? []).filter((id) => drawing.includes(id)).length;
+  return { ready, total: drawing.length, all: drawing.length > 0 && ready === drawing.length };
+}
+
+function ReadyCount() {
+  const { ready, total } = useReadyCount();
+  return (
+    <span className="ready-count" aria-live="polite">
+      <b>
+        {ready}/{total}
+      </b>{" "}
+      ready
+    </span>
+  );
+}
+
+/** Shown in place of the toolbar once you're ready: Cancel to keep drawing. Everyone ready → voting starts. */
+function ReadyBar() {
+  const g = useGame();
+  const { all } = useReadyCount();
+  if (all) {
+    return (
+      <div className="ready-bar panel all-ready" role="status">
+        <span className="ready-msg">Everyone is ready! Time to vote…</span>
+      </div>
+    );
+  }
+  return (
+    <div className="ready-bar panel is-ready">
+      <span className="ready-msg">You're ready! Waiting for the others…</span>
+      <button type="button" className="btn small ghost" id="drawoff-cancel-ready" onClick={() => g.drawOffReady(false)}>
+        Cancel, keep drawing
+      </button>
     </div>
   );
 }

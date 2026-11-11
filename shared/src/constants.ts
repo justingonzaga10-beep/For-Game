@@ -36,8 +36,8 @@ export const TIMING = {
   revealSeconds: 5,
   podiumSeconds: 9,
   publicAutoStartSeconds: 8,
-  /** Draw-Off: how long each drawing is on screen for voting. */
-  drawOffVoteSeconds: 10,
+  /** Draw-Off: once everyone is ready, a short pause ("Everyone's ready!") before voting starts. */
+  drawOffReadyPauseMs: 1500,
   /** Draw-Off: reveal of who drew what. */
   drawOffResultsSeconds: 10,
   /** Draw-Off: browsing the round's drawings (the host can skip ahead). */
@@ -84,6 +84,8 @@ export interface RoomSettings {
   listed: boolean;
   /** Draw-Off drawing time in seconds. */
   drawOffTime: number;
+  /** Draw-Off: seconds each drawing is on screen for voting (moves on early once everyone has voted). */
+  drawOffVoteTime: number;
   /** Perimeter: answering time in seconds. */
   perimeterTime: number;
   perimeterUnit: "cm" | "m";
@@ -102,6 +104,7 @@ export const SETTING_BOUNDS = {
   wordChoices: [1, 5],
   hints: [0, 5],
   drawOffTime: [30, 240],
+  drawOffVoteTime: [10, 30],
   perimeterTime: [20, 180],
 } as const;
 
@@ -120,6 +123,7 @@ export const DEFAULT_SETTINGS: RoomSettings = {
   paintThrow: true,
   listed: true,
   drawOffTime: 90,
+  drawOffVoteTime: 15,
   perimeterTime: 60,
   perimeterUnit: "cm",
   perimeterMax: 20,

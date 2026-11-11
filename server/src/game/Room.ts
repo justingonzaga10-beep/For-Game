@@ -290,6 +290,11 @@ export class Room implements RoomContext {
     if (this.inGame) this.mode.vote?.(byId, entryId, stars);
   }
 
+  /** Draw-Off: a player is done drawing, or changed their mind. */
+  drawOffReady(byId: string, ready: unknown): void {
+    if (this.inGame) this.mode.setReady?.(byId, ready === true);
+  }
+
   /** Perimeter: the drawer's finished shape. */
   submitShape(byId: string, shape: unknown): void {
     if (this.inGame) this.mode.submitShape?.(byId, shape);

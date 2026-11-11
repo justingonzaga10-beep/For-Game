@@ -85,6 +85,8 @@ export interface GameMode {
   vote?(byId: string, entryId: unknown, stars: unknown): void;
   /** Draw-Off only: the host ends the gallery early. */
   hostContinue?(): void;
+  /** Draw-Off only: a player is done drawing (or changed their mind). */
+  setReady?(byId: string, ready: boolean): void;
   /** Perimeter only: the drawer's finished shape. */
   submitShape?(byId: string, shape: unknown): void;
   /** Perimeter only: a player's answer. */

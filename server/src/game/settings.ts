@@ -33,6 +33,7 @@ export function applySettingsPatch(current: RoomSettings, patch: unknown, minPla
   if ("listed" in p) next.listed = p.listed === true;
   if ("mode" in p && GAME_MODE_IDS.includes(p.mode as GameModeId)) next.mode = p.mode as GameModeId;
   if ("drawOffTime" in p) next.drawOffTime = clampInt(p.drawOffTime, SETTING_BOUNDS.drawOffTime, current.drawOffTime);
+  if ("drawOffVoteTime" in p) next.drawOffVoteTime = clampInt(p.drawOffVoteTime, SETTING_BOUNDS.drawOffVoteTime, current.drawOffVoteTime);
   if ("perimeterTime" in p) next.perimeterTime = clampInt(p.perimeterTime, SETTING_BOUNDS.perimeterTime, current.perimeterTime);
   if (p.perimeterUnit === "cm" || p.perimeterUnit === "m") next.perimeterUnit = p.perimeterUnit;
   if ("perimeterMax" in p && (PERIMETER_MAXES as readonly number[]).includes(Number(p.perimeterMax))) next.perimeterMax = Number(p.perimeterMax);

@@ -85,6 +85,23 @@ const ink = (page) => page.evaluate(() => {
       ok((await late.textContent(".canvas-frame")).includes("next round"), "a mid-round joiner is told they'll play next round");
       ok((await late.locator(".toolbar").count()) === 0, "the joiner can't draw this round");
       all.push(late);
+
+      // Round 1 ends early with Ready; round 2 runs to the timer.
+      console.log("Round 1: ready");
+      await host.click("#drawoff-ready");
+      await b.waitForFunction(() => document.querySelector(".ready-count b")?.textContent === "1/4", null, { timeout: 5000 }).catch(() => {});
+      ok((await b.textContent(".ready-count")).includes("1/4"), "others see 1/4 ready (the joiner isn't counted)");
+      await host.waitForSelector(".ready-stamp", { timeout: 5000 }).catch(() => {});
+      ok((await host.locator(".toolbar").count()) === 0 && (await host.locator(".ready-stamp").count()) === 1, "Ready pauses the host's drawing");
+      ok((await b.locator(`.scoreboard li.guessed`).count()) === 1, "a tick shows by the ready player");
+      await host.click("#drawoff-cancel-ready");
+      await host.waitForSelector(".toolbar", { timeout: 5000 });
+      ok((await host.locator(".ready-stamp").count()) === 0, "Cancel lets the host keep drawing");
+      const t0 = Date.now();
+      for (const p of [host, b, c, phone]) await p.click("#drawoff-ready");
+      await host.waitForSelector(".ready-bar.all-ready", { timeout: 5000 });
+      await host.waitForSelector(".vote-panel", { timeout: 8000 });
+      ok(Date.now() - t0 < 8000, `voting starts as soon as everyone is ready (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
     }
 
     console.log(`Round ${round}: voting`);

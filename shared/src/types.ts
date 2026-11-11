@@ -106,6 +106,8 @@ export interface DrawOffView {
   spectating: boolean;
   /** Players drawing this round. */
   participantIds: string[];
+  /** Drawing: players who clicked Ready (their drawing is paused until they cancel). */
+  readyIds: string[];
   /** Voting: the drawing on screen. */
   current: {
     entryId: string;
@@ -243,6 +245,8 @@ export interface ClientToServerEvents {
   "drawoff:vote": (entryId: string, stars: number) => void;
   /** Draw-Off: the host ends the gallery early. */
   "drawoff:continue": () => void;
+  /** Draw-Off: done drawing (true) or changed your mind (false). Voting starts early once everyone is ready. */
+  "drawoff:ready": (ready: boolean) => void;
   /** Perimeter and Area: the drawer's finished shape. */
   "perim:shape": (shape: PerimeterShape) => void;
   /** Perimeter: a player's answer. */

@@ -65,8 +65,10 @@ export function Scoreboard() {
       {sorted.map((p, i) => {
         if (i === 0 || p.score !== sorted[i - 1].score) rank = i + 1;
         const drawing = p.id === view.drawerId && (view.phase === "drawing" || view.phase === "choosing");
+        // Draw-Off: a tick by the players who clicked Ready.
+        const ready = view.phase === "drawoff_drawing" && !!view.drawOff?.readyIds.includes(p.id);
         return (
-          <li key={p.id} data-player-id={p.id} className={`${p.id === view.you ? "me" : ""} ${p.guessed ? "guessed" : ""} ${drawing ? "drawing" : ""}`}>
+          <li key={p.id} data-player-id={p.id} className={`${p.id === view.you ? "me" : ""} ${p.guessed || ready ? "guessed" : ""} ${drawing ? "drawing" : ""}`}>
             <span className="rank">#{rank}</span>
             <span className="avatar-slot">
               <Avatar avatar={p.avatar} size={38} />
@@ -92,8 +94,8 @@ export function Scoreboard() {
               </span>
               <span className="score">{p.score} pts</span>
             </span>
-            <span className="state" aria-label={drawing ? "Drawing" : p.guessed ? "Guessed" : undefined}>
-              {drawing ? "✎" : p.guessed ? "✓" : muted.has(p.id) ? "🔇" : ""}
+            <span className="state" aria-label={drawing ? "Drawing" : ready ? "Ready" : p.guessed ? "Guessed" : undefined}>
+              {drawing ? "✎" : p.guessed || ready ? "✓" : muted.has(p.id) ? "🔇" : ""}
             </span>
             {p.kickVotes > 0 && <span className="votes">kick {p.kickVotes}</span>}
             <PlayerActions player={p} view={view} />
